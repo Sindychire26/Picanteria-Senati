@@ -1,0 +1,9 @@
+# Librerías (se instalan con npm install)
+node_modules/
+
+# Contraseñas y keys: NUNCA se suben
+.env
+
+# Archivos generados
+dist/
+*.log

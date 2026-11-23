@@ -1,0 +1,21 @@
+CARPETA DE IMÁGENES
+===================
+
+Aquí van las fotos. El backend las sirve en http://localhost:3000/imagenes/...
+
+logo.png   -> logo de la picantería (opcional, cuadrado, fondo transparente)
+
+platos/    -> una foto por plato, con EXACTAMENTE estos nombres:
+
+  soltero-de-queso.jpg       chupe-de-camarones.jpg     chicha-de-guinapo.jpg
+  ocopa-arequipena.jpg       adobo-arequipeno.jpg       chicha-morada.jpg
+  escribano.jpg              chairo.jpg                 kola-escocesa.jpg
+  sarza-de-patita.jpg        chaque.jpg                 limonada.jpg
+  rocoto-relleno.jpg         cuy-chactado.jpg           queso-helado.jpg
+  costillar-frito.jpg        malaya-frita.jpg           bunuelos.jpg
+  americano.jpg              locro-de-pecho.jpg
+
+Reglas:
+- Todo en minúsculas, sin tildes, sin ñ, sin espacios (usa guiones).
+- Formato .jpg, idealmente cuadradas (600 x 600 px) y de menos de 300 KB.
+- Si falta una foto, la app muestra "Sin foto" en su lugar (no se rompe).
