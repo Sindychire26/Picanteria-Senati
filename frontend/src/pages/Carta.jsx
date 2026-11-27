@@ -39,6 +39,7 @@ export default function Carta() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [tienePedidos, setTienePedidos] = useState(false);   // ¿mostrar "Ver mis pedidos"?
+  const [sinPicante, setSinPicante] = useState(false);       // filtro: solo platos que no pican
 
   // Estado del buscador
   const [buscando, setBuscando] = useState(false);
@@ -83,9 +84,10 @@ export default function Carta() {
   useEffect(() => {
     async function recargarCarta() {
       try {
-        const [p, mp] = await Promise.all([obtenerPlatos(), obtenerMasPedidos(5)]);
+        const [p, mp, c] = await Promise.all([obtenerPlatos(), obtenerMasPedidos(5), obtenerCategorias()]);
         setPlatos(p);
         setMasPedidos(mp);
+        setCategorias(c);   // por si el admin agregó o renombró una categoría
       } catch { /* si falla, se queda la carta que ya estaba */ }
     }
     socket.on('carta:actualizada', recargarCarta);
@@ -102,8 +104,10 @@ export default function Carta() {
 
   // Filtrado: se calcula en cada render a partir de "texto" (no necesita su propio estado)
   const consulta = normalizar(texto);
+  // Si el filtro "Sin picante" está activo, solo quedan los platos con picante = 0
+  const platosVisibles = sinPicante ? platos.filter((p) => !p.picante) : platos;
   const resultados = consulta
-    ? platos.filter((p) =>
+    ? platosVisibles.filter((p) =>
         normalizar(`${p.nombre} ${p.descripcion} ${p.categoria}`).includes(consulta)
       )
     : [];
@@ -128,7 +132,7 @@ export default function Carta() {
         {buscando ? (
           <Buscador texto={texto} onCambiar={setTexto} onCerrar={cerrarBuscador} />
         ) : (
-          <CategoriasNav categorias={categorias} />
+          <CategoriasNav categorias={categorias} sinPicante={sinPicante} onSinPicante={() => setSinPicante(!sinPicante)} />
         )}
       </div>
 
@@ -166,11 +170,12 @@ export default function Carta() {
               </Link>
             )}
             <CarruselPromos promociones={promociones} />
-            <MasPedidos platos={masPedidos} onAgregar={agregar} />
+            {!sinPicante && <MasPedidos platos={masPedidos} onAgregar={agregar} />}
+            {sinPicante && <p className="aviso-sin-picante">Mostrando solo platos que no pican</p>}
 
             {/* Una sección por categoría, con sus platos */}
             {categorias.map((categoria) => {
-              const platosDeCategoria = platos.filter((p) => p.categoria_id === categoria.id);
+              const platosDeCategoria = platosVisibles.filter((p) => p.categoria_id === categoria.id);
               if (platosDeCategoria.length === 0) return null;
 
               return (

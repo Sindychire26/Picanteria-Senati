@@ -17,7 +17,7 @@ const SELECT_PEDIDOS = `
           pa.metodo AS metodo_pago, pa.estado AS estado_pago,
           json_agg(
             json_build_object(
-              'nombre', pl.nombre, 'cantidad', d.cantidad,
+              'nombre', pl.nombre || COALESCE(' (' || d.presentacion || ')', ''), 'cantidad', d.cantidad,
               'precio', d.precio_unitario, 'nota', d.nota, 'es_regalo', d.es_regalo
             ) ORDER BY d.id
           ) AS items
@@ -50,6 +50,11 @@ export async function crearPedido(req, res) {
         item.cantidad < 1 || item.cantidad > 20) {
       return res.status(400).json({ mensaje: 'Hay un plato con cantidad no válida' });
     }
+    // Tamaño: 'chico' o 'grande' ('vaso'/'jarra' también valen: carritos de la versión anterior)
+    if (item.presentacion !== undefined && item.presentacion !== null &&
+        !['chico', 'grande', 'vaso', 'jarra'].includes(item.presentacion)) {
+      return res.status(400).json({ mensaje: 'Tamaño no válido' });
+    }
   }
 
   // 2. TRANSACCIÓN: usamos UNA conexión del pool para todo el proceso.
@@ -71,7 +76,7 @@ export async function crearPedido(req, res) {
     // 2.3 Traer los PRECIOS REALES desde la base (no usamos el precio que manda el celular)
     const ids = items.map((i) => i.platoId);
     const platosRes = await client.query(
-      'SELECT id, nombre, precio FROM platos WHERE id = ANY($1) AND disponible = TRUE',
+      'SELECT id, nombre, precio, precio_grande, nombre_chico, nombre_grande FROM platos WHERE id = ANY($1) AND disponible = TRUE',
       [ids]
     );
     const platos = new Map(platosRes.rows.map((p) => [p.id, p]));   // id → plato
@@ -79,8 +84,22 @@ export async function crearPedido(req, res) {
       if (!platos.has(item.platoId)) throw new ErrorCliente('Un plato del carrito ya no está disponible', 409);
     }
 
+    // Platos con DOS TAMAÑOS (precio_grande): el cliente eligió 'chico' o 'grande'.
+    // Se cobra el precio de ese tamaño y se guarda su NOMBRE (ej: "Jarra", "1 litro").
+    // Si el plato tiene un solo tamaño, no se guarda nada (null).
+    const esGrande = (item) => item.presentacion === 'grande' || item.presentacion === 'jarra';
+    const precioDe = (item) => {
+      const p = platos.get(item.platoId);
+      return p.precio_grande && esGrande(item) ? p.precio_grande : p.precio;
+    };
+    const tamanoDe = (item) => {
+      const p = platos.get(item.platoId);
+      if (!p.precio_grande) return null;
+      return esGrande(item) ? (p.nombre_grande || 'Grande') : (p.nombre_chico || 'Chico');
+    };
+
     // 2.4 Calcular el total
-    const subtotal = items.reduce((suma, i) => suma + platos.get(i.platoId).precio * i.cantidad, 0);
+    const subtotal = items.reduce((suma, i) => suma + precioDe(i) * i.cantidad, 0);
     // Cupón de descuento (solo clientes registrados y solo si es suyo y no está usado)
     // FOR UPDATE "bloquea" la fila: si manda 2 pedidos a la vez, no lo usa dos veces
     let descuento = 0;
@@ -117,9 +136,9 @@ export async function crearPedido(req, res) {
     // 2.6 Guardar cada plato del pedido
     for (const item of items) {
       await client.query(
-        `INSERT INTO detalle_pedido (pedido_id, plato_id, cantidad, precio_unitario, nota)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [pedidoId, item.platoId, item.cantidad, platos.get(item.platoId).precio, item.nota?.trim() || null]
+        `INSERT INTO detalle_pedido (pedido_id, plato_id, cantidad, precio_unitario, nota, presentacion)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [pedidoId, item.platoId, item.cantidad, precioDe(item), item.nota?.trim() || null, tamanoDe(item)]
       );
     }
 

@@ -263,6 +263,10 @@ export default function Admin() {
             platos={platos}
             categorias={categorias}
             onCambio={cargar}
+            onCambioCategorias={() => {
+              obtenerCategorias().then(setCategorias).catch(() => {});
+              cargar();
+            }}
             onAviso={avisar}
             onError={setError}
           />

@@ -35,7 +35,7 @@ export async function pedidosDelRol(req, res) {
                -- minutos que lleva esperando (para que cocina vea qué urge)
                FLOOR(EXTRACT(EPOCH FROM (NOW() - pe.creado_en)) / 60)::INT AS minutos,
                json_agg(
-                 json_build_object('nombre', pl.nombre, 'cantidad', d.cantidad,
+                 json_build_object('nombre', pl.nombre || COALESCE(' (' || d.presentacion || ')', ''), 'cantidad', d.cantidad,
                                    'nota', d.nota, 'es_regalo', d.es_regalo)
                  ORDER BY d.id
                ) AS items

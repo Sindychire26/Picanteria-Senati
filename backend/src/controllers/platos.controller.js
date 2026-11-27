@@ -23,7 +23,8 @@ export async function listarCategorias(req, res) {
 export async function listarPlatos(req, res) {
   try {
     const { rows } = await pool.query(`
-      SELECT  p.id, p.nombre, p.descripcion, p.precio, p.imagen_url,
+      SELECT  p.id, p.nombre, p.descripcion, p.precio, p.precio_grande, p.nombre_chico, p.nombre_grande,
+              p.picante, p.imagen_url,
               c.id     AS categoria_id,
               c.nombre AS categoria,
               v.veces_pedido
@@ -48,7 +49,8 @@ export async function platosMasPedidos(req, res) {
     // $1 es un PARÁMETRO: pg reemplaza el valor de forma segura.
     // Nunca se pegan valores directo en el SQL (eso permite "SQL injection").
     const { rows } = await pool.query(
-      `SELECT  v.id, v.nombre, v.veces_pedido, p.precio, p.imagen_url
+      `SELECT  v.id, v.nombre, v.veces_pedido, p.precio, p.precio_grande, p.nombre_chico, p.nombre_grande,
+               p.picante, p.imagen_url
        FROM    v_platos_mas_pedidos v
        JOIN    platos p ON p.id = v.id
        WHERE   p.disponible = TRUE AND v.veces_pedido > 0

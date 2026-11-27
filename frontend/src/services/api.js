@@ -90,3 +90,12 @@ export const eliminarPlato = (id) => pedir(`/admin/platos/${id}`, { method: 'DEL
 export const subirFoto = (imagen) =>
   pedir('/admin/fotos', { method: 'POST', body: JSON.stringify({ imagen }) });
 export const agregarMesa = () => pedir('/admin/mesas', { method: 'POST' });
+// Categorías de la carta
+export const obtenerCategoriasAdmin = () => pedir('/admin/categorias');
+export const crearCategoria = (nombre) =>
+  pedir('/admin/categorias', { method: 'POST', body: JSON.stringify({ nombre }) });
+export const renombrarCategoria = (id, nombre) =>
+  pedir(`/admin/categorias/${id}`, { method: 'PATCH', body: JSON.stringify({ nombre }) });
+export const moverCategoria = (id, direccion) =>
+  pedir(`/admin/categorias/${id}/mover`, { method: 'POST', body: JSON.stringify({ direccion }) });
+export const eliminarCategoria = (id) => pedir(`/admin/categorias/${id}`, { method: 'DELETE' });

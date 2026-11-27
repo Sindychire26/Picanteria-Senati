@@ -12,14 +12,17 @@ import { normalizar } from './Buscador.jsx';
 import FotoPlato from './FotoPlato.jsx';
 import FormPlato from './FormPlato.jsx';
 import { IconoBuscar } from './Iconos.jsx';
+import Picante from './Picante.jsx';
+import GestionCategorias from './GestionCategorias.jsx';
 
-export default function CartaAdmin({ platos, categorias, onCambio, onAviso, onError }) {
+export default function CartaAdmin({ platos, categorias, onCambio, onCambioCategorias, onAviso, onError }) {
   const [texto, setTexto] = useState('');
   const [categoria, setCategoria] = useState('todas');   // id de categoría o 'todas'
   const [precios, setPrecios] = useState({});            // precios que se están escribiendo
   const [formulario, setFormulario] = useState(null);    // null · 'nuevo' · {plato}
   const [porEliminar, setPorEliminar] = useState(null);
   const [subiendoFoto, setSubiendoFoto] = useState(null); // id del plato cuya foto se sube
+  const [verCategorias, setVerCategorias] = useState(false); // ventana de categorías abierta
   const inputFoto = useRef(null);                        // UN solo <input file> para todas las filas
   const platoFoto = useRef(null);                        // a qué plato va la foto elegida
 
@@ -110,6 +113,8 @@ export default function CartaAdmin({ platos, categorias, onCambio, onAviso, onEr
           <p className="carta-detalle">
             {categoria === 'todas' && consulta ? `${p.categoria} · ` : ''}
             {p.veces_pedido} {p.veces_pedido === 1 ? 'pedido' : 'pedidos'}
+            {p.precio_grande && <span className="carta-jarra">{p.nombre_chico} / {p.nombre_grande} S/ {p.precio_grande.toFixed(2)}</span>}
+            <Picante nivel={p.picante} />
             {!p.disponible && <span className="carta-agotado">No disponible</span>}
           </p>
         </div>
@@ -162,7 +167,10 @@ export default function CartaAdmin({ platos, categorias, onCambio, onAviso, onEr
             haz clic en una foto para cambiarla
           </p>
         </div>
-        <button className="boton-chico activo" onClick={() => setFormulario('nuevo')}>+ Agregar plato</button>
+        <div className="admin-acciones">
+          <button className="boton-chico" onClick={() => setVerCategorias(true)}>Categorías</button>
+          <button className="boton-chico activo" onClick={() => setFormulario('nuevo')}>+ Agregar plato</button>
+        </div>
       </div>
 
       {/* Barra de búsqueda y categorías */}
@@ -201,6 +209,10 @@ export default function CartaAdmin({ platos, categorias, onCambio, onAviso, onEr
 
       {/* Input escondido que abre la galería (lo usan todas las fotos) */}
       <input ref={inputFoto} type="file" accept="image/*" hidden onChange={fotoElegida} />
+
+      {verCategorias && (
+        <GestionCategorias onCerrar={() => setVerCategorias(false)} onCambio={onCambioCategorias} />
+      )}
 
       {formulario && (
         <FormPlato

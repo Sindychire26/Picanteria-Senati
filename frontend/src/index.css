@@ -887,6 +887,7 @@ a.panel-salir { text-decoration: none; display: inline-block; }
 .modal-fondo {
   position: fixed; inset: 0; z-index: 50; background: rgba(43, 26, 53, 0.55);
   display: grid; place-items: center; padding: 16px; overflow-y: auto;
+  grid-template-columns: minmax(0, 1fr);    /* la ventana nunca pasa el ancho de la pantalla */
 }
 .modal {
   position: relative; width: min(420px, 100%); background: var(--superficie);
@@ -1130,4 +1131,79 @@ a.boton-chico { text-decoration: none; display: inline-block; }
   .carta-precio { grid-area: precio; }
   .carta-fila .interruptor { grid-area: interruptor; }
   .carta-acciones { grid-area: acciones; }
+}
+
+/* =====================================================================
+   BEBIDAS EN VASO O JARRA (dos botones en lugar de precio + "+")
+   ===================================================================== */
+.tamanos { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.boton-tamano {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  border: 1.5px solid var(--morado); background: var(--superficie); color: var(--morado);
+  border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap;
+}
+.boton-tamano span { flex-grow: 1; text-align: left; font-weight: 700; color: var(--texto); }
+.boton-tamano strong {
+  width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
+  background: var(--morado); color: var(--crema); font-size: 16px; line-height: 1;
+}
+.boton-tamano:hover { background: var(--lila-suave); }
+.boton-tamano:active { transform: scale(0.98); }
+.campo-opcional { font-weight: 600; font-size: 12px; color: var(--texto-suave); margin-left: 4px; }
+.form-plato-ayuda { font-size: 13px; color: var(--azul); background: var(--azul-suave); border-radius: 8px; padding: 8px 10px; }
+.carta-jarra { background: var(--azul-suave); color: var(--azul); font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+
+/* =====================================================================
+   PICANTE, TAMAÑOS (formulario) Y CATEGORÍAS
+   ===================================================================== */
+/* Etiqueta en la carta */
+.picante {
+  display: inline-flex; align-items: center; gap: 3px; width: fit-content; margin: 2px 0 4px;
+  font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 6px;
+  background: var(--rojo-suave); color: var(--rojo);
+}
+.picante svg { flex-shrink: 0; }
+.picante-2 { background: var(--rocoto); color: var(--crema); }
+/* Filtro "Sin picante" en la barra de categorías */
+.categoria-chip.filtro-picante { border: 1.5px dashed var(--azul); color: var(--azul); background: var(--superficie); }
+.categoria-chip.filtro-picante.activo { border-style: solid; background: var(--azul); color: var(--crema); }
+.aviso-sin-picante {
+  margin: 4px 0 0; background: var(--azul-suave); color: var(--azul); font-weight: 800; font-size: 14px;
+  border-radius: 10px; padding: 10px 14px;
+}
+
+/* Formulario del plato */
+.opciones-picante { display: flex; gap: 6px; margin-top: 4px; }
+.opciones-picante button {
+  flex: 1; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+  border-radius: 10px; padding: 10px 6px; font: inherit; font-size: 14px; font-weight: 800;
+}
+.opciones-picante button.activo { background: var(--morado); border-color: var(--morado); color: var(--crema); }
+.form-plato-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 700; cursor: pointer; }
+.form-plato-check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--morado); flex-shrink: 0; }
+.form-plato-tamanos { display: flex; flex-direction: column; gap: 10px; background: var(--superficie-2); border-radius: 12px; padding: 12px; }
+.sugerencias { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Ventana de categorías */
+.gestion-categorias { width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.categorias-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.categorias-lista li { background: var(--superficie-2); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.categorias-fila { display: flex; align-items: center; gap: 8px; }
+.categorias-fila input {
+  flex: 1; min-width: 0; border: 1px solid var(--borde); border-radius: 8px; padding: 9px 10px;
+  font: inherit; font-weight: 700; background: var(--superficie); color: var(--texto);
+}
+.categorias-mover { display: flex; gap: 4px; }
+.categorias-mover button {
+  width: 34px; height: 34px; border: 1px solid var(--borde); border-radius: 8px;
+  background: var(--superficie); color: var(--morado); font-weight: 800; font-size: 16px;
+}
+.categorias-mover button:disabled { opacity: 0.35; }
+.categorias-cuenta { font-size: 13px; color: var(--texto-suave); white-space: nowrap; }
+.categorias-acciones { display: flex; justify-content: flex-end; gap: 6px; }
+.enlace-eliminar { border: none; background: none; color: var(--rojo); font: inherit; font-size: 13px; font-weight: 800; text-decoration: underline; padding: 0; }
+.categorias-nueva { display: flex; gap: 8px; }
+.categorias-nueva input {
+  flex: 1; min-width: 0; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px;
+  font: inherit; background: var(--superficie); color: var(--texto);
 }

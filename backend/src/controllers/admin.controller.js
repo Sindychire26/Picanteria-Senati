@@ -102,8 +102,8 @@ export async function movimientos(req, res) {
 export async function platosAdmin(req, res) {
   try {
     const { rows } = await pool.query(`
-      SELECT p.id, p.nombre, p.descripcion, p.precio, p.disponible, p.imagen_url,
-             p.categoria_id, c.nombre AS categoria, v.veces_pedido
+      SELECT p.id, p.nombre, p.descripcion, p.precio, p.precio_grande, p.nombre_chico, p.nombre_grande,
+             p.picante, p.disponible, p.imagen_url, p.categoria_id, c.nombre AS categoria, v.veces_pedido
       FROM   platos p
       JOIN   categorias c           ON c.id = p.categoria_id
       JOIN   v_platos_mas_pedidos v ON v.id = p.id
@@ -116,6 +116,8 @@ export async function platosAdmin(req, res) {
     res.status(500).json({ mensaje: 'Error al obtener los platos' });
   }
 }
+
+const vacio = (v) => v === undefined || v === null || v === '';
 
 // Revisa los datos de un plato. "parcial" = al editar, los campos pueden faltar.
 // Devuelve el mensaje de error, o null si todo está bien.
@@ -130,27 +132,42 @@ function validarPlato(d, parcial) {
   if (falta('precio') || (d.precio !== undefined && !(Number(d.precio) > 0 && Number(d.precio) < 10000))) {
     return 'Precio no válido';
   }
+  // Tamaño grande: opcional. Si viene precio grande, los dos tamaños necesitan nombre.
+  if (!vacio(d.precio_grande)) {
+    if (!(Number(d.precio_grande) > 0 && Number(d.precio_grande) < 10000)) return 'Precio del tamaño grande no válido';
+    if (vacio(d.nombre_chico) || vacio(d.nombre_grande)) return 'Ponle nombre a los dos tamaños (ej: Vaso y Jarra)';
+    if (String(d.nombre_chico).length > 20 || String(d.nombre_grande).length > 20) return 'El nombre del tamaño es muy largo';
+  }
+  if (d.picante !== undefined && ![0, 1, 2].includes(d.picante)) return 'Nivel de picante no válido';
   if (d.disponible !== undefined && typeof d.disponible !== 'boolean') return 'Valor de disponible no válido';
   if (d.imagen_url && !/^\/(api\/fotos|imagenes)\//.test(d.imagen_url)) return 'Foto no válida';
   return null;
 }
 
+// Los 3 datos del tamaño grande, listos para la base: si no hay precio grande, todo null
+function tamanos(d) {
+  if (vacio(d.precio_grande)) return [null, null, null];
+  return [Number(d.precio_grande), String(d.nombre_chico).trim(), String(d.nombre_grande).trim()];
+}
+
 // ---------------------------------------------------------------------
 // POST /api/admin/platos  → plato NUEVO
-// Body: { nombre, descripcion, categoria_id, precio, imagen_url?, disponible? }
+// Body: { nombre, descripcion, categoria_id, precio, picante?, imagen_url?, disponible?,
+//         precio_grande?, nombre_chico?, nombre_grande? }
 // ---------------------------------------------------------------------
 export async function crearPlato(req, res) {
   const error = validarPlato(req.body, false);
   if (error) return res.status(400).json({ mensaje: error });
 
-  const { nombre, descripcion, categoria_id, precio, imagen_url, disponible } = req.body;
+  const { nombre, descripcion, categoria_id, precio, picante, imagen_url, disponible } = req.body;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO platos (nombre, descripcion, categoria_id, precio, imagen_url, disponible)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO platos (nombre, descripcion, categoria_id, precio, precio_grande, nombre_chico, nombre_grande,
+                          picante, imagen_url, disponible)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id, nombre, precio, disponible`,
       [nombre.trim(), descripcion?.trim() || null, Number(categoria_id), Number(precio),
-       imagen_url || null, disponible ?? true]
+       ...tamanos(req.body), picante ?? 0, imagen_url || null, disponible ?? true]
     );
     avisarPedido('carta:actualizada', rows[0]);   // 📢 aparece en las cartas abiertas
     res.status(201).json(rows[0]);
@@ -164,29 +181,36 @@ export async function crearPlato(req, res) {
 
 // ---------------------------------------------------------------------
 // PATCH /api/admin/platos/:id  → editar (solo los campos que vengan)
-// Body: { nombre?, descripcion?, categoria_id?, precio?, imagen_url?, disponible? }
+// Body: los mismos campos que al crear, todos opcionales
 // ---------------------------------------------------------------------
 export async function actualizarPlato(req, res) {
   const id = Number(req.params.id);
   const error = validarPlato(req.body, true);
   if (error) return res.status(400).json({ mensaje: error });
 
-  const { nombre, descripcion, categoria_id, precio, imagen_url, disponible } = req.body;
+  const { nombre, descripcion, categoria_id, precio, picante, imagen_url, disponible } = req.body;
   try {
-    // COALESCE: si no mandan un campo (null), se queda el valor que tenía
+    // COALESCE: si no mandan un campo (null), se queda el valor que tenía.
+    // Los tamaños son distintos: SÍ se pueden borrar (volver a un solo precio),
+    // por eso $9 dice si vinieron o no ("precio_grande" en el body).
     const { rows } = await pool.query(
       `UPDATE platos
-       SET nombre       = COALESCE($2, nombre),
-           descripcion  = COALESCE($3, descripcion),
-           categoria_id = COALESCE($4, categoria_id),
-           precio       = COALESCE($5, precio),
-           imagen_url   = COALESCE($6, imagen_url),
-           disponible   = COALESCE($7, disponible)
+       SET nombre        = COALESCE($2, nombre),
+           descripcion   = COALESCE($3, descripcion),
+           categoria_id  = COALESCE($4, categoria_id),
+           precio        = COALESCE($5, precio),
+           imagen_url    = COALESCE($6, imagen_url),
+           disponible    = COALESCE($7, disponible),
+           picante       = COALESCE($8, picante),
+           precio_grande = CASE WHEN $9 THEN $10::NUMERIC ELSE precio_grande END,
+           nombre_chico  = CASE WHEN $9 THEN $11 ELSE nombre_chico END,
+           nombre_grande = CASE WHEN $9 THEN $12 ELSE nombre_grande END
        WHERE id = $1 AND eliminado = FALSE
        RETURNING id, nombre, precio, disponible`,
       [id, nombre?.trim() ?? null, descripcion?.trim() ?? null,
        categoria_id !== undefined ? Number(categoria_id) : null,
-       precio !== undefined ? Number(precio) : null, imagen_url ?? null, disponible ?? null]
+       precio !== undefined ? Number(precio) : null, imagen_url ?? null, disponible ?? null,
+       picante ?? null, 'precio_grande' in req.body, ...tamanos(req.body)]
     );
     if (rows.length === 0) return res.status(404).json({ mensaje: 'Plato no encontrado' });
 
@@ -231,5 +255,121 @@ export async function eliminarPlato(req, res) {
   } catch (e) {
     console.error(e);
     res.status(500).json({ mensaje: 'No se pudo eliminar el plato' });
+  }
+}
+
+// =====================================================================
+//  CATEGORÍAS DE LA CARTA (Entradas, Bebidas, Platos no picantes...)
+// =====================================================================
+
+// GET /api/admin/categorias  → con cuántos platos tiene cada una
+export async function categoriasAdmin(req, res) {
+  try {
+    const { rows } = await pool.query(`
+      SELECT c.id, c.nombre, c.orden,
+             COUNT(p.id) FILTER (WHERE p.eliminado = FALSE)::INT AS platos,
+             COUNT(p.id)::INT AS platos_totales          -- incluye los ocultos (con ventas)
+      FROM   categorias c
+      LEFT JOIN platos p ON p.categoria_id = c.id
+      GROUP BY c.id
+      ORDER BY c.orden, c.id
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener las categorías' });
+  }
+}
+
+const nombreValido = (n) => typeof n === 'string' && n.trim().length >= 3 && n.trim().length <= 50;
+
+// POST /api/admin/categorias  Body: { nombre }  → queda al final
+export async function crearCategoria(req, res) {
+  if (!nombreValido(req.body.nombre)) return res.status(400).json({ mensaje: 'El nombre debe tener entre 3 y 50 letras' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO categorias (nombre, orden)
+       VALUES ($1, (SELECT COALESCE(MAX(orden), 0) + 1 FROM categorias))
+       RETURNING id, nombre, orden`,
+      [req.body.nombre.trim()]
+    );
+    avisarPedido('carta:actualizada', {});
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ mensaje: 'Ya existe una categoría con ese nombre' });
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo crear la categoría' });
+  }
+}
+
+// PATCH /api/admin/categorias/:id  Body: { nombre }  → renombrar
+export async function renombrarCategoria(req, res) {
+  if (!nombreValido(req.body.nombre)) return res.status(400).json({ mensaje: 'El nombre debe tener entre 3 y 50 letras' });
+  try {
+    const r = await pool.query('UPDATE categorias SET nombre = $2 WHERE id = $1 RETURNING id',
+      [Number(req.params.id), req.body.nombre.trim()]);
+    if (r.rowCount === 0) return res.status(404).json({ mensaje: 'Categoría no encontrada' });
+    avisarPedido('carta:actualizada', {});
+    res.json({ mensaje: 'Categoría renombrada' });
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ mensaje: 'Ya existe una categoría con ese nombre' });
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo renombrar' });
+  }
+}
+
+// POST /api/admin/categorias/:id/mover  Body: { direccion: 'arriba' | 'abajo' }
+// Intercambia el "orden" con la categoría vecina (en una transacción)
+export async function moverCategoria(req, res) {
+  const id = Number(req.params.id);
+  const arriba = req.body.direccion === 'arriba';
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Primero dejamos los órdenes como 1, 2, 3... sin repetidos
+    await client.query(`
+      UPDATE categorias c SET orden = n.fila
+      FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY orden, id) AS fila FROM categorias) n
+      WHERE c.id = n.id`);
+    const { rows: [actual] } = await client.query('SELECT orden FROM categorias WHERE id = $1', [id]);
+    if (!actual) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ mensaje: 'Categoría no encontrada' });
+    }
+    const vecino = actual.orden + (arriba ? -1 : 1);
+    await client.query('UPDATE categorias SET orden = $1 WHERE orden = $2', [actual.orden, vecino]);
+    await client.query('UPDATE categorias SET orden = $1 WHERE id = $2 AND $1 > 0 AND $1 <= (SELECT COUNT(*) FROM categorias)', [vecino, id]);
+    await client.query('COMMIT');
+    avisarPedido('carta:actualizada', {});
+    res.json({ mensaje: 'Orden cambiado' });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo mover' });
+  } finally {
+    client.release();
+  }
+}
+
+// DELETE /api/admin/categorias/:id  → solo si no tiene ningún plato
+export async function eliminarCategoria(req, res) {
+  const id = Number(req.params.id);
+  try {
+    const { rows: [c] } = await pool.query(
+      `SELECT COUNT(*) FILTER (WHERE eliminado = FALSE)::INT AS visibles, COUNT(*)::INT AS todos
+       FROM platos WHERE categoria_id = $1`, [id]);
+    if (c.visibles > 0) {
+      return res.status(409).json({ mensaje: `Tiene ${c.visibles} ${c.visibles === 1 ? 'plato' : 'platos'}: muévelos a otra categoría primero` });
+    }
+    if (c.todos > 0) {
+      return res.status(409).json({ mensaje: 'Tiene platos antiguos con ventas guardadas: no se puede borrar, pero sí renombrar' });
+    }
+    const r = await pool.query('DELETE FROM categorias WHERE id = $1', [id]);
+    if (r.rowCount === 0) return res.status(404).json({ mensaje: 'Categoría no encontrada' });
+    avisarPedido('carta:actualizada', {});
+    res.json({ mensaje: 'Categoría eliminada' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo eliminar' });
   }
 }

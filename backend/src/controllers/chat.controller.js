@@ -18,7 +18,8 @@ const MAX_LARGO = 500;       // cada mensaje se corta a 500 caracteres
 // ---------------------------------------------------------------------
 async function armarContexto() {
   const { rows: platos } = await pool.query(`
-    SELECT p.id, p.nombre, p.descripcion, p.precio, p.imagen_url, c.nombre AS categoria, v.veces_pedido
+    SELECT p.id, p.nombre, p.descripcion, p.precio, p.precio_grande, p.nombre_chico, p.nombre_grande,
+           p.picante, p.imagen_url, c.nombre AS categoria, v.veces_pedido
     FROM   platos p
     JOIN   categorias c           ON c.id = p.categoria_id
     JOIN   v_platos_mas_pedidos v ON v.id = p.id
@@ -31,8 +32,12 @@ async function armarContexto() {
   `);
 
   // La carta en texto, una línea por plato: la IA solo conoce lo que está aquí
+  const PICANTE = ['no pica', 'pica poco', 'picante'];
+  const precioTexto = (p) => (p.precio_grande
+    ? `${p.nombre_chico || 'chico'} S/ ${p.precio.toFixed(2)}, ${p.nombre_grande || 'grande'} S/ ${p.precio_grande.toFixed(2)}`
+    : `S/ ${p.precio.toFixed(2)}`);
   const carta = platos
-    .map((p) => `- id ${p.id} | ${p.nombre} | ${p.categoria} | S/ ${p.precio.toFixed(2)} | ${p.descripcion} | pedido ${p.veces_pedido} veces`)
+    .map((p) => `- id ${p.id} | ${p.nombre} | ${p.categoria} | ${precioTexto(p)} | ${PICANTE[p.picante]} | ${p.descripcion} | pedido ${p.veces_pedido} veces`)
     .join('\n');
   const listaPromos = promos.map((p) => `- ${p.titulo}: ${p.descripcion}`).join('\n') || '- (ninguna hoy)';
 
@@ -51,6 +56,7 @@ REGLAS:
 3. Si preguntan por alergias o ingredientes que no están en la descripción, di que confirmen con el mesero.
 4. Si preguntan algo que no tiene que ver con el restaurante, responde amablemente que solo puedes ayudar con la carta.
 5. Recomienda como máximo 3 platos por respuesta.
+6. Si piden algo que no pique (niños, personas que no comen picante), recomienda solo platos que digan "no pica".
 
 FORMATO: responde SOLO con un objeto JSON válido, sin texto extra, así:
 {"respuesta": "tu mensaje para el cliente", "platos": [ids de los platos que recomiendas, o [] si ninguno]}`;

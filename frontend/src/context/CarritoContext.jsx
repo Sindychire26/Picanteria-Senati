@@ -17,8 +17,12 @@ function leerGuardado() {
   }
 }
 
+// Cada línea del carrito tiene una "clave": el plato + su tamaño.
+// Así "Chicha morada (Vaso)" y "Chicha morada (Jarra)" son dos líneas distintas.
+const claveDe = (item) => item.clave ?? String(item.platoId);   // carritos viejos no tenían clave
+
 export function CarritoProvider({ children }) {
-  // Cada item: { platoId, nombre, precio, imagen_url, cantidad, nota }
+  // Cada item: { clave, platoId, presentacion, nombre, precio, imagen_url, cantidad, nota }
   const [items, setItems] = useState(leerGuardado);
 
   // Cada vez que cambia el carrito, lo guardamos
@@ -26,34 +30,41 @@ export function CarritoProvider({ children }) {
     try { localStorage.setItem('carrito', JSON.stringify(items)); } catch { /* sin espacio: no pasa nada */ }
   }, [items]);
 
-  function agregar(plato) {
+  // tamano: 'chico' o 'grande' (solo platos con dos tamaños, los que tienen precio_grande)
+  function agregar(plato, tamano) {
+    const tam = plato.precio_grande ? (tamano === 'grande' ? 'grande' : 'chico') : null;
+    const nombreTam = tam === 'grande' ? (plato.nombre_grande || 'Grande') : (plato.nombre_chico || 'Chico');
+    const clave = tam ? `${plato.id}-${tam}` : String(plato.id);
     setItems((actuales) => {
-      const existe = actuales.find((i) => i.platoId === plato.id);
+      const existe = actuales.find((i) => claveDe(i) === clave);
       if (existe) {
         // Ya estaba: solo sumamos 1 (máximo 20)
         return actuales.map((i) =>
-          i.platoId === plato.id ? { ...i, cantidad: Math.min(i.cantidad + 1, 20) } : i
+          claveDe(i) === clave ? { ...i, cantidad: Math.min(i.cantidad + 1, 20) } : i
         );
       }
       // Nuevo en el carrito
       return [...actuales, {
-        platoId: plato.id, nombre: plato.nombre, precio: plato.precio,
+        clave, platoId: plato.id, presentacion: tam,
+        nombre: tam ? `${plato.nombre} (${nombreTam})` : plato.nombre,
+        precio: tam === 'grande' ? plato.precio_grande : plato.precio,
         imagen_url: plato.imagen_url, cantidad: 1, nota: '',
       }];
     });
   }
 
-  function cambiarCantidad(platoId, cantidad) {
-    if (cantidad <= 0) return quitar(platoId);
-    setItems((a) => a.map((i) => (i.platoId === platoId ? { ...i, cantidad: Math.min(cantidad, 20) } : i)));
+  // Las demás funciones reciben la CLAVE de la línea (item.clave)
+  function cambiarCantidad(clave, cantidad) {
+    if (cantidad <= 0) return quitar(clave);
+    setItems((a) => a.map((i) => (claveDe(i) === clave ? { ...i, cantidad: Math.min(cantidad, 20) } : i)));
   }
 
-  function cambiarNota(platoId, nota) {
-    setItems((a) => a.map((i) => (i.platoId === platoId ? { ...i, nota } : i)));
+  function cambiarNota(clave, nota) {
+    setItems((a) => a.map((i) => (claveDe(i) === clave ? { ...i, nota } : i)));
   }
 
-  function quitar(platoId) {
-    setItems((a) => a.filter((i) => i.platoId !== platoId));
+  function quitar(clave) {
+    setItems((a) => a.filter((i) => claveDe(i) !== clave));
   }
 
   function vaciar() {
@@ -66,7 +77,7 @@ export function CarritoProvider({ children }) {
 
   return (
     <CarritoContext.Provider
-      value={{ items, agregar, cambiarCantidad, cambiarNota, quitar, vaciar, totalItems, total }}
+      value={{ items, agregar, cambiarCantidad, cambiarNota, quitar, vaciar, totalItems, total, claveDe }}
     >
       {children}
     </CarritoContext.Provider>

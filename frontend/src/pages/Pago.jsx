@@ -105,7 +105,7 @@ export default function Pago() {
         cuentaId: obtenerCuenta(codigo),
         metodoPago: metodo,
         cuponId: cupon && usarCupon ? cupon.id : undefined,
-        items: items.map((i) => ({ platoId: i.platoId, cantidad: i.cantidad, nota: i.nota })),
+        items: items.map((i) => ({ platoId: i.platoId, cantidad: i.cantidad, nota: i.nota, presentacion: i.presentacion })),
       });
 
       // Guardar la tarjeta nueva (solo marca y últimos 4 dígitos, NUNCA el número completo)

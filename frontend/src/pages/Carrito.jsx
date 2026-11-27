@@ -10,7 +10,7 @@ import FotoPlato from '../components/FotoPlato.jsx';
 
 export default function Carrito() {
   const { codigo } = useParams();
-  const { items, cambiarCantidad, cambiarNota, quitar, total, totalItems } = useCarrito();
+  const { items, cambiarCantidad, cambiarNota, quitar, total, totalItems, claveDe } = useCarrito();
 
   return (
     <>
@@ -26,12 +26,12 @@ export default function Carrito() {
         ) : (
           <>
             {items.map((item) => (
-              <article key={item.platoId} className="item-carrito">
+              <article key={claveDe(item)} className="item-carrito">
                 <FotoPlato src={item.imagen_url} alt={item.nombre} className="item-carrito-foto" />
                 <div className="item-carrito-info">
                   <div className="item-carrito-fila">
                     <h3 className="item-carrito-nombre">{item.nombre}</h3>
-                    <button className="item-carrito-quitar" onClick={() => quitar(item.platoId)}>
+                    <button className="item-carrito-quitar" onClick={() => quitar(claveDe(item))}>
                       Quitar
                     </button>
                   </div>
@@ -41,15 +41,15 @@ export default function Carrito() {
                     placeholder="Nota: sin cebolla, poco picante..."
                     maxLength={200}
                     value={item.nota}
-                    onChange={(e) => cambiarNota(item.platoId, e.target.value)}
+                    onChange={(e) => cambiarNota(claveDe(item), e.target.value)}
                   />
 
                   <div className="item-carrito-fila">
                     {/* Contador - 2 + */}
                     <div className="contador">
-                      <button onClick={() => cambiarCantidad(item.platoId, item.cantidad - 1)} aria-label="Quitar uno">−</button>
+                      <button onClick={() => cambiarCantidad(claveDe(item), item.cantidad - 1)} aria-label="Quitar uno">−</button>
                       <span>{item.cantidad}</span>
-                      <button onClick={() => cambiarCantidad(item.platoId, item.cantidad + 1)} aria-label="Agregar uno">+</button>
+                      <button onClick={() => cambiarCantidad(claveDe(item), item.cantidad + 1)} aria-label="Agregar uno">+</button>
                     </div>
                     <span className="precio">S/ {(item.precio * item.cantidad).toFixed(2)}</span>
                   </div>

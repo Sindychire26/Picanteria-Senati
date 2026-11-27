@@ -25,6 +25,10 @@ CREATE TABLE platos (
   nombre        VARCHAR(100) NOT NULL,
   descripcion   TEXT,
   precio        NUMERIC(8,2) NOT NULL CHECK (precio >= 0),
+  precio_grande NUMERIC(8,2) CHECK (precio_grande > 0),     -- tamaño grande (vacío = un solo tamaño)
+  nombre_chico  VARCHAR(20),                                -- ej: 'Vaso', 'Personal'
+  nombre_grande VARCHAR(20),                                -- ej: 'Jarra', '1 litro'
+  picante       SMALLINT NOT NULL DEFAULT 0 CHECK (picante BETWEEN 0 AND 2),   -- 0 no pica, 1 poco, 2 picante
   imagen_url    TEXT,
   disponible    BOOLEAN NOT NULL DEFAULT TRUE,
   eliminado     BOOLEAN NOT NULL DEFAULT FALSE   -- ya pedido alguna vez: se oculta en vez de borrarse
@@ -116,6 +120,7 @@ CREATE TABLE detalle_pedido (
   plato_id         INT NOT NULL REFERENCES platos(id),
   cantidad         INT NOT NULL CHECK (cantidad > 0),
   precio_unitario  NUMERIC(8,2) NOT NULL,      -- precio del momento (si luego sube, no cambia)
+  presentacion     VARCHAR(20),                 -- nombre del tamaño elegido (ej: 'Jarra'), o vacío
   nota             VARCHAR(200),               -- "sin cebolla"
   es_regalo        BOOLEAN NOT NULL DEFAULT FALSE  -- TRUE si vino gratis por una promo
 );

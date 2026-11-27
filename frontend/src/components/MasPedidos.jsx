@@ -3,6 +3,7 @@
 //  Los datos vienen de la VISTA v_platos_mas_pedidos de PostgreSQL.
 // =====================================================================
 import FotoPlato from './FotoPlato.jsx';
+import PrecioAgregar from './PrecioAgregar.jsx';
 
 export default function MasPedidos({ platos, onAgregar }) {
   if (platos.length === 0) return null;   // si nadie pidió nada aún, no se muestra
@@ -20,12 +21,7 @@ export default function MasPedidos({ platos, onAgregar }) {
             <div className="mas-pedido-cuerpo">
               <p className="mas-pedido-nombre">{plato.nombre}</p>
               <p className="mas-pedido-veces">{plato.veces_pedido} pedidos</p>
-              <div className="mas-pedido-pie">
-                <span className="precio">S/ {plato.precio.toFixed(2)}</span>
-                <button className="boton-agregar" onClick={() => onAgregar(plato)} aria-label={`Agregar ${plato.nombre}`}>
-                  +
-                </button>
-              </div>
+              <PrecioAgregar plato={plato} onAgregar={onAgregar} className="mas-pedido-pie" />
             </div>
           </article>
         ))}

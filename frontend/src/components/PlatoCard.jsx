@@ -3,6 +3,8 @@
 //  Es reutilizable: Carta.jsx la dibuja una vez por cada plato.
 // =====================================================================
 import FotoPlato from './FotoPlato.jsx';
+import PrecioAgregar from './PrecioAgregar.jsx';
+import Picante from './Picante.jsx';
 
 export default function PlatoCard({ plato, onAgregar }) {
   return (
@@ -11,13 +13,10 @@ export default function PlatoCard({ plato, onAgregar }) {
 
       <div className="plato-info">
         <h3 className="plato-nombre">{plato.nombre}</h3>
+        <Picante nivel={plato.picante} />
         <p className="plato-descripcion">{plato.descripcion}</p>
-        <div className="plato-pie">
-          <span className="precio">S/ {plato.precio.toFixed(2)}</span>
-          <button className="boton-agregar" onClick={() => onAgregar(plato)} aria-label={`Agregar ${plato.nombre}`}>
-            +
-          </button>
-        </div>
+        {/* Precio y botón + (o Vaso / Jarra si es una bebida con dos tamaños) */}
+        <PrecioAgregar plato={plato} onAgregar={onAgregar} />
       </div>
     </article>
   );

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pool from './db.js';
 
-const ARCHIVOS = ['migracion-mesas.sql'];
+const ARCHIVOS = ['migracion-mesas.sql', 'migracion-tamanos.sql'];
 
 export async function actualizarBaseDeDatos() {
   for (const archivo of ARCHIVOS) {

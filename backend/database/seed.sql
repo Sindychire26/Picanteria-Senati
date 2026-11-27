@@ -42,6 +42,10 @@ INSERT INTO platos (categoria_id, nombre, descripcion, precio, imagen_url) VALUE
   (5, 'Queso helado',            'El helado arequipeño con canela',                                   8.00, '/imagenes/platos/queso-helado.jpg'),
   (5, 'Buñuelos con miel',       'Buñuelos caseros con miel de chancaca',                            10.00, '/imagenes/platos/bunuelos.jpg');
 
+-- Nivel de picante (0 no pica, 1 pica poco, 2 picante). Los demás quedan en 0.
+UPDATE platos SET picante = 2 WHERE nombre IN ('Escribano', 'Rocoto relleno con pastel de papa', 'Americano');
+UPDATE platos SET picante = 1 WHERE nombre IN ('Soltero de queso', 'Sarza de patita', 'Ocopa arequipeña', 'Adobo arequipeño');
+
 -- Mesas (el código es lo que irá dentro del QR) ---------------------
 INSERT INTO mesas (numero, codigo) VALUES
   (1,'M01-A7K2'), (2,'M02-B3X9'), (3,'M03-C8P4'), (4,'M04-D2M6'), (5,'M05-E9R1'),
