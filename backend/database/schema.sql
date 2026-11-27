@@ -6,7 +6,7 @@
 
 -- Borra las tablas si ya existían (en orden inverso a las dependencias)
 DROP VIEW  IF EXISTS v_platos_mas_pedidos;
-DROP TABLE IF EXISTS cupones, combo_platos, promociones, pagos, detalle_pedido,
+DROP TABLE IF EXISTS imagenes, cupones, combo_platos, promociones, pagos, detalle_pedido,
                      pedidos, cuentas, personal, metodos_pago, clientes,
                      mesas, platos, categorias CASCADE;
 
@@ -26,7 +26,17 @@ CREATE TABLE platos (
   descripcion   TEXT,
   precio        NUMERIC(8,2) NOT NULL CHECK (precio >= 0),
   imagen_url    TEXT,
-  disponible    BOOLEAN NOT NULL DEFAULT TRUE
+  disponible    BOOLEAN NOT NULL DEFAULT TRUE,
+  eliminado     BOOLEAN NOT NULL DEFAULT FALSE   -- ya pedido alguna vez: se oculta en vez de borrarse
+);
+
+-- Fotos subidas desde el panel de admin (se guardan en la base porque
+-- Render gratis borra los archivos subidos al reiniciarse)
+CREATE TABLE imagenes (
+  id         SERIAL PRIMARY KEY,
+  tipo       VARCHAR(30) NOT NULL,
+  datos      BYTEA NOT NULL,
+  creado_en  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ---------------------------------------------------------------------
@@ -81,6 +91,8 @@ CREATE TABLE cuentas (
   abierta_en  TIMESTAMP NOT NULL DEFAULT NOW(),
   cerrada_en  TIMESTAMP
 );
+-- Una mesa solo puede tener UNA cuenta abierta a la vez (índice único parcial)
+CREATE UNIQUE INDEX una_cuenta_abierta_por_mesa ON cuentas (mesa_id) WHERE estado = 'abierta';
 
 CREATE TABLE pedidos (
   id              SERIAL PRIMARY KEY,

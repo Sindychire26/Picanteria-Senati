@@ -3,7 +3,8 @@
 //  Aquí es donde por fin se GUARDA información en la base de datos.
 // =====================================================================
 import pool from '../db.js';
-import { avisarPedido } from '../socket.js';
+import { avisarPedido, avisar } from '../socket.js';
+import { obtenerOAbrirCuenta } from '../cuentas.js';
 
 const METODOS = ['yape', 'plin', 'tarjeta', 'efectivo'];
 
@@ -63,26 +64,9 @@ export async function crearPedido(req, res) {
     if (mesaRes.rows.length === 0) throw new ErrorCliente('Código de mesa no válido', 404);
     const mesaId = mesaRes.rows[0].id;
 
-    // 2.2 Usar la cuenta abierta de esta mesa, o abrir una nueva
-    let cuenta = null;
-    if (cuentaId) {
-      const r = await client.query(
-        `SELECT id FROM cuentas WHERE id = $1 AND mesa_id = $2 AND estado = 'abierta'`,
-        [cuentaId, mesaId]
-      );
-      cuenta = r.rows[0]?.id ?? null;
-      // Si inició sesión a mitad de la visita, la cuenta pasa a ser suya
-      if (cuenta && clienteId) {
-        await client.query('UPDATE cuentas SET cliente_id = COALESCE(cliente_id, $2) WHERE id = $1', [cuenta, clienteId]);
-      }
-    }
-    if (!cuenta) {
-      const r = await client.query(
-        'INSERT INTO cuentas (mesa_id, cliente_id) VALUES ($1, $2) RETURNING id',
-        [mesaId, clienteId]
-      );
-      cuenta = r.rows[0].id;
-    }
+    // 2.2 Usar la cuenta abierta de esta mesa (o abrirla). Ver cuentas.js:
+    //     si un amigo ya ocupó la mesa, este pedido cae en la MISMA cuenta.
+    const { id: cuenta } = await obtenerOAbrirCuenta(client, mesaId, Number(cuentaId) || null, clienteId);
 
     // 2.3 Traer los PRECIOS REALES desde la base (no usamos el precio que manda el celular)
     const ids = items.map((i) => i.platoId);
@@ -193,6 +177,7 @@ export async function crearPedido(req, res) {
     // 3. Responder con el pedido completo
     const { rows } = await client.query(`${SELECT_PEDIDOS} WHERE pe.id = $1 ${GROUP_PEDIDOS}`, [pedidoId]);
     avisarPedido('pedido:nuevo', rows[0]);   // 📢 la cocina (o caja) se entera al instante
+    avisar('mesas:actualizadas', { mesaId });  // 📢 la mesa ahora tiene pedidos
     res.status(201).json({ ...rows[0], cupon_ganado: cuponGanado });   // 201 = "creado"
   } catch (error) {
     await client.query('ROLLBACK');  // ✘ algo falló: se deshace todo

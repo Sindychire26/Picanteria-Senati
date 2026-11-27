@@ -21,3 +21,8 @@ export function iniciarSocket(servidorHttp) {
 export function avisarPedido(evento, datos) {
   io?.emit(evento, datos);
 }
+
+// Aviso genérico (lo usan las mesas y la carta): mismo mecanismo, otro nombre de evento
+export function avisar(evento, datos = {}) {
+  io?.emit(evento, datos);
+}

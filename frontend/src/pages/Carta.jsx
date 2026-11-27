@@ -13,6 +13,7 @@ import {
   obtenerPlatos,
   obtenerMasPedidos,
   obtenerPromociones,
+  ocuparMesa,
 } from '../services/api.js';
 import Encabezado from '../components/Encabezado.jsx';
 import Saludo from '../components/Saludo.jsx';
@@ -24,7 +25,7 @@ import PlatoCard from '../components/PlatoCard.jsx';
 import BarraCarrito from '../components/BarraCarrito.jsx';
 import ChatAsistente from '../components/ChatAsistente.jsx';
 import { useCarrito } from '../context/CarritoContext.jsx';
-import { obtenerCuenta } from '../services/cuenta.js';
+import { obtenerCuenta, borrarCuenta } from '../services/cuenta.js';
 import { socket } from '../services/socket.js';
 
 export default function Carta() {
@@ -37,6 +38,7 @@ export default function Carta() {
   const [promociones, setPromociones] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [tienePedidos, setTienePedidos] = useState(false);   // ¿mostrar "Ver mis pedidos"?
 
   // Estado del buscador
   const [buscando, setBuscando] = useState(false);
@@ -55,6 +57,15 @@ export default function Carta() {
           obtenerPromociones(),
         ]);
         setMesa(m);
+
+        // Escaneó el QR → la mesa queda OCUPADA. Si el celular recuerda una cuenta
+        // y el backend devuelve OTRA, la vieja ya se cerró (la mesa fue liberada):
+        // la olvidamos para no mostrar pedidos de una visita anterior.
+        const guardada = obtenerCuenta(codigo);
+        const { cuentaId } = await ocuparMesa(codigo, guardada);
+        if (guardada && guardada !== cuentaId) borrarCuenta(codigo);
+        setTienePedidos(guardada === cuentaId);
+
         setCategorias(c);
         setPlatos(p);
         setMasPedidos(mp);
@@ -83,8 +94,6 @@ export default function Carta() {
 
   // El botón "+" agrega al carrito (CarritoContext)
   const { agregar } = useCarrito();
-  // ¿Esta mesa ya hizo pedidos? Entonces mostramos el enlace a "Mis pedidos"
-  const tienePedidos = obtenerCuenta(codigo) !== null;
 
   function cerrarBuscador() {
     setBuscando(false);

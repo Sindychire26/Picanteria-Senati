@@ -1,41 +1,48 @@
 /* =====================================================================
    index.css — ESTILOS DE TODA LA APP
    Diseñado primero para celular ("mobile first").
-   Paleta "CHICHA MORADA": un morado oscuro como color fuerte y
-   colores pastel (lavanda, durazno, menta, limón) para todo lo demás.
-   Nada de blanco puro: los fondos son lilas suaves.
+   Paleta "MISTIANA": morado de la chicha para la marca, fondo color
+   sillar, y los ESTADOS siempre en colores suaves:
+     rojo suave  = en espera / ocupada   (por cobrar, en cola)
+     lila        = en proceso            (en el fogón)
+     azul suave  = listo / libre         (para llevar, entregado)
    ===================================================================== */
 
 /* ---------- Variables: se cambian aquí y afectan a toda la app ---------- */
 :root {
-  /* Morados (el color fuerte, inspirado en la chicha morada) */
-  --morado-noche: #2b1a35;    /* fondo de la pantalla de cocina */
-  --morado-oscuro: #3a1f47;   /* cabeceras */
-  --morado: #5e3573;          /* botones y precios */
-  --morado-medio: #8e6aa8;    /* detalles */
+  /* Morados (la marca, inspirada en la chicha morada) */
+  --morado-noche: #2e1a38;
+  --morado-oscuro: #3b2049;   /* títulos */
+  --morado: #4b2a5c;          /* cabeceras, botones y precios */
+  --morado-medio: #8a6a9a;    /* detalles */
 
-  /* Pasteles */
-  --lavanda: #d9c8ea;
-  --lavanda-suave: #e9def2;
-  --durazno: #f7cdb8;
-  --durazno-suave: #fbe6da;
-  --menta: #c4e5d1;
-  --menta-oscura: #2f6b4f;    /* texto sobre menta */
-  --limon: #f6e6a6;
-  --limon-oscuro: #7a5c06;    /* texto sobre limón */
-  --frambuesa: #d9577a;       /* alertas / urgente */
-  --frambuesa-suave: #f6d3dd;
+  /* Lilas: rellenos suaves y estado "en proceso" */
+  --lavanda: #e2d3e6;
+  --lavanda-suave: #eee3ea;
+  --lila: #eadcf0;            /* en proceso (fondo) */
+  --lila-suave: #f4ecf3;
 
-  /* Fondos y textos */
-  --fondo: #efe6f3;           /* fondo de la página: lila clarito (no blanco) */
-  --superficie: #f8f2f9;      /* tarjetas */
-  --superficie-2: #f3ebf6;    /* rellenos dentro de tarjetas */
-  --texto: #3a2440;
-  --texto-suave: #7a6585;
-  --borde: #dccbe5;
+  /* Azul Colca: estado "listo" / "libre" */
+  --azul-suave: #dce7f2;
+  --azul: #1e4e79;
+
+  /* Rocoto: estado "en espera" / "ocupada" y alertas */
+  --rojo-suave: #f6d9d2;
+  --rojo: #8e2a1c;            /* texto sobre rojo suave */
+  --rocoto: #b8321f;          /* alertas fuertes (urgente, eliminar) */
+
+  /* Fondos y textos (color sillar, nada de blanco puro) */
+  --fondo: #f6f0e6;           /* fondo de la página */
+  --fondo-panel: #efe6d8;     /* fondo de las pantallas del personal */
+  --superficie: #fffcf7;      /* tarjetas */
+  --superficie-2: #f8f2ea;    /* rellenos dentro de tarjetas */
+  --texto: #2e2233;
+  --texto-suave: #6e6070;
+  --borde: #e3d5d2;
+  --crema: #fff8f0;           /* texto claro sobre morado */
 
   --radio: 16px;
-  --sombra: 0 4px 14px rgba(58, 31, 71, 0.10);
+  --sombra: 0 4px 14px rgba(46, 34, 51, 0.10);
   --fuente-titulos: 'Fraunces', Georgia, serif;
 
   font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -51,7 +58,7 @@ button { font: inherit; cursor: pointer; }
 /* ---------- Mensajes y botones generales ---------- */
 .cargando { text-align: center; padding: 40vh 16px 0; color: var(--texto-suave); }
 .error {
-  background: var(--frambuesa-suave); color: #8c2443;
+  background: var(--rojo-suave); color: var(--rojo);
   padding: 12px; border-radius: var(--radio); margin: 16px 0;
 }
 .boton {
@@ -67,35 +74,50 @@ button { font: inherit; cursor: pointer; }
   border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
   border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700;
 }
-.boton-chico.peligro { background: var(--frambuesa); border-color: var(--frambuesa); color: #fff; }
+.boton-chico.peligro { background: var(--rocoto); border-color: var(--rocoto); color: var(--crema); }
 
 /* ---------- Fotos ---------- */
 .foto { display: block; width: 100%; height: 100%; object-fit: cover; }
 .foto-vacia { display: grid; place-items: center; background: var(--lavanda-suave); color: var(--texto-suave); font-size: 12px; }
 
 /* ---------- Pantalla de inicio ---------- */
-.inicio { max-width: 480px; margin: 0 auto; padding: 48px 20px; text-align: center; }
-.inicio-logo { width: 120px; height: 120px; object-fit: contain; }
-.inicio h1 { font-family: var(--fuente-titulos); color: var(--morado); font-size: 30px; margin-top: 8px; }
-.inicio-lema { color: var(--texto-suave); margin-top: 4px; }
-.inicio-caja {
-  background: var(--lavanda-suave); border: 1px solid var(--borde);
-  border-radius: var(--radio); padding: 16px; margin: 28px 0;
+.inicio { min-height: 100vh; background: var(--fondo); }
+.inicio-cabecera {
+  background: var(--morado); color: var(--crema); padding: 28px 22px 26px;
+  display: flex; align-items: center; gap: 16px;
 }
-.inicio-demo { font-size: 14px; color: var(--texto-suave); font-weight: 600; margin-bottom: 12px; }
-.inicio-mesas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.inicio-cabecera > div { max-width: 720px; }
+.inicio-logo { width: 64px; height: 64px; object-fit: contain; flex-shrink: 0; }
+.inicio-cabecera h1 { font-family: var(--fuente-titulos); font-size: 28px; line-height: 1.15; }
+.inicio-cabecera p { font-size: 15px; opacity: 0.85; margin-top: 4px; }
+.inicio-contenido { max-width: 760px; margin: 0 auto; padding: 20px 18px 40px; display: flex; flex-direction: column; gap: 14px; }
+.inicio-contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.inicio-contador { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; }
+.inicio-contador span { font-size: 13px; font-weight: 700; color: var(--texto-suave); }
+.inicio-contador strong { font-family: var(--fuente-titulos); font-size: 30px; line-height: 1.1; }
+.inicio-contador.libre strong { color: var(--azul); }
+.inicio-contador.ocupada strong { color: var(--rojo); }
+.inicio-subtitulo { font-family: var(--fuente-titulos); font-size: 20px; color: var(--morado-oscuro); margin-top: 4px; }
+.inicio-mesas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(104px, 100%), 1fr)); gap: 10px; }
 .inicio-mesa {
-  background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
-  padding: 14px; text-decoration: none; color: var(--texto); font-weight: 700;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px;
+  border-radius: 12px; border: 1.5px solid var(--borde); background: var(--azul-suave);
 }
-.inicio-mesa:hover { background: var(--lavanda); border-color: var(--morado-medio); color: var(--morado); }
-.inicio-personal { display: inline-block; margin-top: 32px; color: var(--texto-suave); font-size: 14px; font-weight: 700; }
+.inicio-mesa.ocupada { background: var(--rojo-suave); border-color: var(--rojo); }
+.inicio-mesa-numero { font-family: var(--fuente-titulos); font-size: 26px; font-weight: 700; line-height: 1; color: var(--azul); }
+.inicio-mesa-estado { font-size: 12px; font-weight: 800; color: var(--azul); }
+.ocupada .inicio-mesa-numero, .ocupada .inicio-mesa-estado { color: var(--rojo); }
+.inicio-mesa-qr {
+  border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+  border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 800; min-height: 32px;
+}
+.inicio-personal { align-self: center; margin-top: 16px; color: var(--texto-suave); font-size: 14px; font-weight: 800; }
 
 /* ---------- Encabezado (banner con el Misti) ---------- */
 .encabezado {
   position: relative; min-height: 170px;
   display: flex; flex-direction: column; justify-content: space-between;
-  padding: 14px 16px 16px; color: #fff;
+  padding: 14px 16px 16px; color: var(--crema);
   background-color: var(--morado);           /* se ve si no hay foto */
   background-size: cover; background-position: center 35%;
 }
@@ -117,12 +139,12 @@ button { font: inherit; cursor: pointer; }
 }
 .encabezado-lema { font-size: 14px; font-weight: 600; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
 .encabezado-mesa {
-  flex-shrink: 0; background: var(--durazno); color: var(--morado-oscuro);
+  flex-shrink: 0; background: var(--lila); color: var(--morado-oscuro);
   font-weight: 800; font-size: 13px; padding: 4px 12px; border-radius: 999px;
 }
 .encabezado-buscar {
   width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-  border: none; background: rgba(255, 255, 255, 0.22); color: #fff;
+  border: none; background: rgba(255, 255, 255, 0.22); color: var(--crema);
   display: grid; place-items: center; backdrop-filter: blur(4px);
 }
 .encabezado-buscar:hover { background: rgba(255, 255, 255, 0.35); }
@@ -171,7 +193,7 @@ button { font: inherit; cursor: pointer; }
 /* Enlace "Ver el estado de mis pedidos" */
 .enlace-pedidos {
   display: block; margin-top: 14px; padding: 12px 16px; border-radius: var(--radio);
-  background: var(--menta); color: var(--menta-oscura); font-weight: 800; text-decoration: none;
+  background: var(--azul-suave); color: var(--azul); font-weight: 800; text-decoration: none;
 }
 
 /* Carrusel de promociones */
@@ -188,9 +210,9 @@ button { font: inherit; cursor: pointer; }
 }
 .promo-sin-foto { background-color: var(--morado-medio); }
 .promo-sin-foto::before { background: none; }
-.promo-contenido { position: relative; padding: 16px 18px 30px; color: #fff; }
+.promo-contenido { position: relative; padding: 16px 18px 30px; color: var(--crema); }
 .promo-etiqueta {
-  display: inline-block; background: var(--durazno); color: var(--morado-oscuro);
+  display: inline-block; background: var(--lila); color: var(--morado-oscuro);
   font-weight: 800; font-size: 13px; padding: 3px 10px; border-radius: 999px;
 }
 .promo-titulo { font-family: var(--fuente-titulos); font-size: 22px; margin: 6px 0 2px; }
@@ -201,7 +223,7 @@ button { font: inherit; cursor: pointer; }
   width: 8px; height: 8px; border-radius: 999px; border: none; padding: 0;
   background: rgba(255, 255, 255, 0.5); transition: width 0.3s, background 0.3s;
 }
-.carrusel-punto.activo { width: 22px; background: var(--durazno); }
+.carrusel-punto.activo { width: 22px; background: var(--lila); }
 @media (prefers-reduced-motion: reduce) { .carrusel-pista { transition: none; } }
 
 /* Tarjeta de plato */
@@ -219,7 +241,7 @@ button { font: inherit; cursor: pointer; }
 
 .boton-agregar {
   width: 36px; height: 36px; border-radius: 50%; border: none;
-  background: var(--morado); color: #fff; font-size: 22px; line-height: 1;
+  background: var(--morado); color: var(--crema); font-size: 22px; line-height: 1;
   box-shadow: 0 2px 8px rgba(94, 53, 115, 0.35);
 }
 .boton-agregar:hover { background: var(--morado-oscuro); }
@@ -234,7 +256,7 @@ button { font: inherit; cursor: pointer; }
 }
 .mas-pedido-foto { position: relative; height: 110px; }
 .mas-pedido-puesto {
-  position: absolute; top: 8px; left: 8px; background: var(--durazno); color: var(--morado-oscuro);
+  position: absolute; top: 8px; left: 8px; background: var(--lila); color: var(--morado-oscuro);
   font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 999px;
 }
 .mas-pedido-cuerpo { padding: 10px 12px 12px; display: flex; flex-direction: column; flex: 1; }
@@ -254,12 +276,12 @@ button { font: inherit; cursor: pointer; }
 }
 .barra-carrito-boton {
   max-width: 608px; margin: 0 auto; display: flex; align-items: center; gap: 12px;
-  background: var(--morado); color: #fff; text-decoration: none;
+  background: var(--morado); color: var(--crema); text-decoration: none;
   border-radius: 999px; padding: 10px 18px 10px 10px; font-weight: 800;
   box-shadow: 0 6px 18px rgba(94, 53, 115, 0.4);
 }
 .barra-carrito-cantidad {
-  background: var(--durazno); color: var(--morado-oscuro); min-width: 34px; height: 34px;
+  background: var(--lila); color: var(--morado-oscuro); min-width: 34px; height: 34px;
   border-radius: 999px; display: grid; place-items: center; animation: salto 0.35s ease;
 }
 .barra-carrito-texto { flex: 1; }
@@ -268,9 +290,9 @@ button { font: inherit; cursor: pointer; }
 /* Cabecera de las páginas internas */
 .cabecera-pagina {
   position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px;
-  padding: 12px 16px; background: var(--morado-oscuro); color: #fff;
+  padding: 12px 16px; background: var(--morado-oscuro); color: var(--crema);
 }
-.cabecera-volver { color: #fff; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; }
+.cabecera-volver { color: var(--crema); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; }
 .cabecera-volver:hover { background: rgba(255, 255, 255, 0.15); }
 .cabecera-titulo { font-family: var(--fuente-titulos); font-size: 20px; }
 
@@ -328,11 +350,11 @@ button { font: inherit; cursor: pointer; }
 .campo input:focus { outline: 2px solid var(--morado-medio); border-color: transparent; }
 .campo-doble { display: flex; gap: 10px; }
 .enlace-prueba { align-self: flex-start; border: none; background: none; color: var(--morado); font-weight: 800; padding: 0; text-decoration: underline; }
-.pago-aviso { background: var(--limon); color: var(--limon-oscuro); border-radius: 12px; padding: 12px 14px; line-height: 1.45; }
+.pago-aviso { background: var(--rojo-suave); color: var(--rojo); border-radius: 12px; padding: 12px 14px; line-height: 1.45; }
 .pago-simulado { font-size: 12px; color: var(--texto-suave); text-align: center; }
 
 /* Mis pedidos */
-.aviso-exito { background: var(--menta); color: var(--menta-oscura); border-radius: var(--radio); padding: 14px 16px; margin-bottom: 14px; }
+.aviso-exito { background: var(--azul-suave); color: var(--azul); border-radius: var(--radio); padding: 14px 16px; margin-bottom: 14px; }
 .aviso-exito-titulo { font-family: var(--fuente-titulos); font-size: 20px; }
 .pedido {
   background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
@@ -343,12 +365,12 @@ button { font: inherit; cursor: pointer; }
 .pedido-codigo { font-family: var(--fuente-titulos); font-size: 20px; color: var(--morado-oscuro); }
 .pedido-hora { font-size: 13px; color: var(--texto-suave); text-transform: capitalize; }
 .estado { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: var(--lavanda-suave); }
-.estado-pendiente_pago { background: var(--limon); color: var(--limon-oscuro); }
-.estado-pagado, .estado-en_preparacion { background: var(--durazno); color: #7a3a1c; }
-.estado-listo, .estado-entregado { background: var(--menta); color: var(--menta-oscura); }
+.estado-pendiente_pago, .estado-pagado { background: var(--rojo-suave); color: var(--rojo); }   /* en espera */
+.estado-en_preparacion { background: var(--lila); color: var(--morado); }                        /* en proceso */
+.estado-listo, .estado-entregado { background: var(--azul-suave); color: var(--azul); }          /* listo */
 .estado-cancelado { background: var(--lavanda-suave); color: var(--texto-suave); }
 
-.aviso-caja { text-align: center; background: var(--limon); color: var(--limon-oscuro); border-radius: 12px; padding: 12px; margin-top: 12px; }
+.aviso-caja { text-align: center; background: var(--rojo-suave); color: var(--rojo); border-radius: 12px; padding: 12px; margin-top: 12px; }
 .aviso-caja-codigo { font-family: var(--fuente-titulos); font-size: 40px; color: var(--morado); line-height: 1.1; margin: 4px 0; }
 
 /* Barra de progreso: 4 pasos con línea que se va pintando */
@@ -387,125 +409,141 @@ button { font: inherit; cursor: pointer; }
 .login-caja .boton-grande { margin-top: 4px; }
 
 /* =====================================================================
-   PANEL DEL PERSONAL — "modo cocina"
-   Fondo lavanda (claro pero no blanco) y cada pedido es una
-   COMANDA de papel en tono crema. La cabecera va en morado chicha.
+   PANEL DEL PERSONAL (cocina, caja, mesero)
+   Fondo sillar, cabecera morado chicha. Cada columna tiene una
+   cabecera de su color de estado y cada pedido es una COMANDA de
+   papel colgada de un gancho.
    ===================================================================== */
-.panel { min-height: 100vh; background: #d6c4e4; color: var(--texto); }
+.panel { min-height: 100vh; background: var(--fondo-panel); color: var(--texto); }
 
 /* Cabecera */
 .panel-cabecera {
   position: sticky; top: 0; z-index: 10;
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  padding: 14px 24px; background: var(--morado-oscuro); color: var(--lavanda-suave);
-  border-bottom: 3px solid var(--morado-medio);
+  padding: 14px 24px; background: var(--morado); color: var(--crema);
 }
 .panel-marca { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .panel-logo { width: 44px; height: 44px; object-fit: contain; }
-.panel-titulo { font-family: var(--fuente-titulos); font-size: 28px; line-height: 1.1; color: #fff; }
-.panel-usuario { font-size: 13px; opacity: 0.7; }
+.panel-titulo { font-family: var(--fuente-titulos); font-size: 28px; line-height: 1.1; color: var(--crema); }
+.panel-usuario { font-size: 13px; opacity: 0.8; }
 .panel-derecha { display: flex; align-items: center; gap: 14px; }
-.panel-reloj { font-family: var(--fuente-titulos); font-size: 30px; font-weight: 700; color: var(--durazno); }
+.panel-reloj { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--crema); }
 .panel-salir {
-  border: 1px solid rgba(255, 255, 255, 0.3); background: transparent; color: #fff;
-  border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700;
+  border: 1px solid rgba(255, 248, 240, 0.4); background: transparent; color: var(--crema);
+  border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 800;
 }
-.panel-salir:hover { background: rgba(255, 255, 255, 0.1); }
+.panel-salir:hover { background: rgba(255, 248, 240, 0.12); }
 .panel-error { margin: 12px 24px 0; }
 .panel-buscar {
   display: block; width: calc(100% - 48px); max-width: 440px; margin: 18px 24px 0;
-  border: 2px solid var(--morado-medio); border-radius: 999px; padding: 12px 20px;
+  border: 1px solid var(--borde); border-radius: 10px; padding: 12px 16px;
   font: inherit; font-size: 17px; background: var(--superficie); color: var(--texto);
 }
+.panel-buscar:focus { outline: 2px solid var(--morado-medio); border-color: transparent; }
+
+/* Franja de resumen (cocina) */
+.panel-resumen { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 24px 0; }
+.panel-resumen span {
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px;
+  padding: 8px 14px; font-weight: 800; font-size: 15px;
+}
+.panel-resumen .alerta { background: var(--rojo-suave); border-color: var(--rojo-suave); color: var(--rojo); }
 
 /* Columnas */
 .panel-columnas {
-  display: grid; gap: 20px; padding: 18px 24px 48px; align-items: start;
+  display: grid; gap: 20px; padding: 18px 24px 32px; align-items: start;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
 }
+/* Cabecera de cada columna: un bloque del color de su estado con el número grande */
 .panel-columna-cabecera {
   display: flex; justify-content: space-between; align-items: center;
-  border-top: 6px solid #e9a27f; background: var(--superficie);
-  border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; box-shadow: var(--sombra);
+  border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+  background: var(--rojo-suave); color: var(--rojo);                 /* en espera (por defecto) */
 }
-.columna-en_preparacion { border-top-color: var(--morado-medio); }
-.columna-listo { border-top-color: #6fb38c; }
-.columna-pendiente_pago { border-top-color: #e2c25a; }
-.panel-columna-titulo { font-family: var(--fuente-titulos); font-size: 22px; color: var(--morado-oscuro); }
-.panel-columna-ayuda { font-size: 13px; color: var(--texto-suave); }
-.panel-contador {                              /* rectángulo con el número de pedidos */
-  min-width: 44px; height: 36px; padding: 0 10px; border-radius: 8px;
-  display: grid; place-items: center; flex-shrink: 0;
-  background: var(--morado); color: #fff; font-weight: 800; font-size: 20px;
-}
-.panel-columna-lista { display: grid; gap: 22px; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+.columna-en_preparacion { background: var(--lila); color: var(--morado); }   /* en proceso */
+.columna-listo { background: var(--azul-suave); color: var(--azul); }        /* listo */
+.panel-columna-titulo { font-size: 19px; font-weight: 800; }
+.panel-columna-ayuda { font-size: 13px; opacity: 0.85; }
+.panel-contador { font-family: var(--fuente-titulos); font-size: 34px; font-weight: 700; line-height: 1; }
+.panel-columna-lista { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr)); }
 .panel-vacio {
   text-align: center; padding: 34px 10px; color: var(--texto-suave);
-  border: 2px dashed var(--morado-medio); border-radius: 12px; opacity: 0.8;
+  border: 2px dashed var(--borde); border-radius: 12px;
 }
 
-/* ---------- La comanda ---------- */
+/* "Listos en el mostrador" (abajo, en la cocina) */
+.panel-mostrador {
+  margin: 0 24px 32px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px;
+  padding: 14px 18px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.panel-mostrador h2 { font-size: 16px; font-weight: 800; margin-right: 4px; }
+.panel-mostrador-item { background: var(--azul-suave); color: var(--azul); border-radius: 8px; padding: 6px 12px; font-weight: 800; }
+.panel-mostrador-ayuda { font-size: 13px; color: var(--texto-suave); }
+
+/* ---------- La comanda: papel colgado de un gancho ---------- */
 .comanda {
-  position: relative; background: #fbf3ea; color: var(--texto);
-  border-radius: 12px 12px 0 0; padding: 14px 16px 16px; margin-bottom: 10px;
-  box-shadow: 0 6px 16px rgba(58, 31, 71, 0.18);
+  position: relative; background: var(--superficie); color: var(--texto);
+  border-radius: 0 0 10px 10px; padding: 14px 16px 16px; margin-top: 14px;
+  border-top: 6px solid #e3a396;                                         /* en espera */
+  box-shadow: 0 6px 16px rgba(46, 34, 51, 0.10);
 }
-/* Borde de abajo "cortado", como ticket arrancado */
-.comanda::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -9px; height: 10px;
-  background: radial-gradient(circle at 6px 0, #fbf3ea 6px, transparent 6.5px) 0 0 / 12px 10px repeat-x;
+.comanda::before {                                     /* el gancho de donde cuelga */
+  content: ''; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  width: 56px; height: 12px; border-radius: 3px; background: #d9cacf;
 }
-.comanda-rojo { box-shadow: 0 0 0 3px var(--frambuesa), 0 6px 16px rgba(58, 31, 71, 0.18); }
+.comanda-estado-en_preparacion { border-top-color: #b898c8; }           /* en proceso */
+.comanda-estado-listo { border-top-color: #9db8d3; }                    /* listo */
+.comanda-rojo { box-shadow: 0 0 0 3px var(--rocoto), 0 6px 16px rgba(46, 34, 51, 0.10); }
 .comanda-nueva { animation: llegada 0.9s ease; }
 @keyframes llegada {
-  0% { transform: translateY(-16px) scale(0.97); opacity: 0; box-shadow: 0 0 0 6px var(--durazno); }
-  60% { opacity: 1; box-shadow: 0 0 0 6px var(--durazno); }
+  0% { transform: translateY(-16px) scale(0.97); opacity: 0; box-shadow: 0 0 0 6px var(--lila); }
+  60% { opacity: 1; box-shadow: 0 0 0 6px var(--lila); }
   100% { transform: none; }
 }
 
 .comanda-cabecera { display: flex; align-items: center; gap: 12px; }
 .comanda-mesa {
-  width: 64px; height: 64px; flex-shrink: 0; border-radius: 12px; color: var(--morado-oscuro);
-  background: var(--lavanda); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 60px; height: 60px; flex-shrink: 0; border-radius: 12px; color: var(--morado);
+  background: var(--lavanda-suave); display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .comanda-mesa-texto { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
-.comanda-mesa-numero { font-family: var(--fuente-titulos); font-size: 30px; font-weight: 700; line-height: 1; }
+.comanda-mesa-numero { font-family: var(--fuente-titulos); font-size: 28px; font-weight: 700; line-height: 1; }
 .comanda-datos { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.comanda-codigo { font-weight: 800; font-size: 16px; }
+.comanda-codigo { font-family: var(--fuente-titulos); font-weight: 700; font-size: 22px; line-height: 1.1; }
 .comanda-platos { font-size: 13px; color: var(--texto-suave); }
 
-/* Semáforo de tiempo */
-.comanda-tiempo { font-weight: 800; font-size: 14px; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
-.tiempo-verde { background: var(--menta); color: var(--menta-oscura); }
-.tiempo-ambar { background: var(--limon); color: var(--limon-oscuro); }
-.tiempo-rojo { background: var(--frambuesa); color: #fff; animation: latido 1.2s ease-in-out infinite; }
+/* Tiempo: neutro a tiempo, rojo suave si demora, rocoto si urge */
+.comanda-tiempo { font-weight: 800; font-size: 14px; padding: 5px 10px; border-radius: 8px; white-space: nowrap; }
+.tiempo-verde { background: var(--superficie-2); color: var(--texto-suave); }
+.tiempo-ambar { background: var(--rojo-suave); color: var(--rojo); }
+.tiempo-rojo { background: var(--rocoto); color: var(--crema); animation: latido 1.2s ease-in-out infinite; }
 @keyframes latido { 50% { transform: scale(1.08); } }
 
-.comanda-corte { border-top: 2px dashed #e6d5c6; margin: 14px -16px 12px; }
+.comanda-corte { border-top: 2px dashed #d9cacf; margin: 14px -16px 12px; }
 
 .comanda-items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .comanda-items li { display: flex; gap: 10px; align-items: flex-start; }
 .comanda-cantidad {
   min-width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
-  background: var(--morado); color: #fff; font-weight: 800; display: grid; place-items: center;
+  background: var(--lavanda-suave); color: var(--morado); font-weight: 800; display: grid; place-items: center;
 }
 .comanda-plato { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 17px; font-weight: 700; line-height: 1.3; padding-top: 3px; }
 .comanda-nota {
-  flex-basis: 100%; font-size: 14px; font-weight: 800; color: var(--limon-oscuro);
-  background: var(--limon); padding: 3px 10px; border-radius: 4px; transform: rotate(-0.6deg);
+  flex-basis: 100%; font-size: 14px; font-weight: 800; color: var(--rojo);
+  background: var(--rojo-suave); padding: 3px 10px; border-radius: 4px;
 }
 .comanda-nota::before { content: '¡Ojo! '; }
-.comanda-promo { font-size: 11px; font-weight: 800; background: var(--menta); color: var(--menta-oscura); border-radius: 999px; padding: 2px 8px; }
-.comanda-cobrar { margin-top: 12px; font-size: 18px; text-align: center; background: var(--limon); color: var(--limon-oscuro); border-radius: 8px; padding: 8px; }
+.comanda-promo { font-size: 11px; font-weight: 800; background: var(--lila); color: var(--morado); border-radius: 6px; padding: 2px 8px; }
+.comanda-cobrar { margin-top: 12px; font-size: 18px; text-align: center; background: var(--rojo-suave); color: var(--rojo); border-radius: 8px; padding: 8px; }
 
 /* Botón de acción: color según lo que hace */
 .comanda-boton {
   display: block; width: 100%; margin-top: 14px; border: none; border-radius: 10px;
-  padding: 13px; font-size: 16px; font-weight: 800; color: #fff; background: var(--morado);
+  padding: 13px; font-size: 16px; font-weight: 800; color: var(--crema); background: var(--morado);
 }
 .comanda-boton:active { transform: scale(0.98); }
 .comanda-boton:disabled { opacity: 0.6; cursor: wait; }
-.boton-listo, .boton-entregado { background: var(--menta); color: var(--menta-oscura); }
+.boton-listo { background: var(--azul); color: var(--crema); }          /* "Listo para servir" */
 
 /* Celular (mesero): cabecera más compacta */
 @media (max-width: 600px) {
@@ -582,8 +620,8 @@ button { font: inherit; cursor: pointer; }
   position: fixed; right: 16px; bottom: 20px; z-index: 25;
   display: flex; align-items: center; gap: 8px;
   border: none; border-radius: 999px; padding: 12px 18px 12px 14px;
-  background: var(--morado-oscuro); color: #fff; font-weight: 800; font-size: 15px;
-  box-shadow: 0 8px 22px rgba(58, 31, 71, 0.4);
+  background: var(--morado-oscuro); color: var(--crema); font-weight: 800; font-size: 15px;
+  box-shadow: 0 8px 22px rgba(46, 34, 51, 0.4);
   animation: aparece-chat 0.4s ease;
 }
 .chat-boton:hover { background: var(--morado); }
@@ -603,26 +641,26 @@ body:has(.barra-carrito) .chat-boton { bottom: 92px; }
 
 .chat-cabecera {
   display: flex; align-items: center; gap: 10px; padding: 14px 16px;
-  background: var(--morado-oscuro); color: #fff; border-radius: 22px 22px 0 0;
+  background: var(--morado-oscuro); color: var(--crema); border-radius: 22px 22px 0 0;
 }
 .chat-avatar {
   width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
-  background: var(--durazno); color: var(--morado-oscuro);
+  background: var(--lila); color: var(--morado-oscuro);
   font-family: var(--fuente-titulos); font-size: 22px; font-weight: 700;
 }
 .chat-titulo { flex: 1; min-width: 0; }
 .chat-nombre { font-family: var(--fuente-titulos); font-size: 19px; }
 .chat-estado { font-size: 12px; opacity: 0.75; }
-.chat-cerrar { border: none; background: rgba(255, 255, 255, 0.12); color: #fff; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; }
+.chat-cerrar { border: none; background: rgba(255, 255, 255, 0.12); color: var(--crema); width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; }
 
 .chat-mensajes { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .chat-fila { display: flex; flex-direction: column; gap: 8px; max-width: 88%; }
 .chat-usuario { align-self: flex-end; align-items: flex-end; }
 .chat-asistente { align-self: flex-start; }
 .chat-burbuja { padding: 10px 14px; border-radius: 16px; line-height: 1.45; font-size: 15px; white-space: pre-line; }
-.chat-usuario .chat-burbuja { background: var(--morado); color: #fff; border-bottom-right-radius: 4px; }
+.chat-usuario .chat-burbuja { background: var(--morado); color: var(--crema); border-bottom-right-radius: 4px; }
 .chat-asistente .chat-burbuja { background: var(--superficie); border: 1px solid var(--borde); border-bottom-left-radius: 4px; }
-.chat-burbuja-error { background: var(--frambuesa-suave) !important; color: #8c2443; }
+.chat-burbuja-error { background: var(--rojo-suave) !important; color: var(--rojo); }
 
 /* Puntitos de "escribiendo..." */
 .chat-puntos { display: flex; gap: 5px; padding: 14px 16px; }
@@ -641,9 +679,9 @@ body:has(.barra-carrito) .chat-boton { bottom: 92px; }
 .chat-plato-nombre { font-weight: 800; font-size: 14px; line-height: 1.25; }
 .chat-plato-agregar {
   flex-shrink: 0; border: none; border-radius: 10px; padding: 9px 12px;
-  background: var(--morado); color: #fff; font-weight: 800; font-size: 13px;
+  background: var(--morado); color: var(--crema); font-weight: 800; font-size: 13px;
 }
-.chat-plato-agregar.listo { background: var(--menta); color: var(--menta-oscura); }
+.chat-plato-agregar.listo { background: var(--azul-suave); color: var(--azul); }
 
 /* Preguntas rápidas */
 .chat-rapidas { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -665,7 +703,7 @@ body:has(.barra-carrito) .chat-boton { bottom: 92px; }
 .chat-entrada input:focus { outline: 2px solid var(--morado-medio); border-color: transparent; }
 .chat-enviar {
   width: 44px; height: 44px; flex-shrink: 0; border: none; border-radius: 50%;
-  background: var(--morado); color: #fff; display: grid; place-items: center;
+  background: var(--morado); color: var(--crema); display: grid; place-items: center;
 }
 .chat-enviar:disabled { opacity: 0.45; cursor: default; }
 
@@ -692,7 +730,7 @@ a.encabezado-buscar { text-decoration: none; }
 
 .pestanas { display: flex; background: var(--lavanda-suave); border-radius: 999px; padding: 4px; margin: 18px 0 14px; }
 .pestanas button { flex: 1; border: none; background: none; border-radius: 999px; padding: 10px; font-weight: 800; color: var(--texto-suave); }
-.pestanas button.activa { background: var(--morado); color: #fff; }
+.pestanas button.activa { background: var(--morado); color: var(--crema); }
 
 .formulario { display: flex; flex-direction: column; gap: 12px; }
 .campo-ayuda { font-weight: 400; }
@@ -703,7 +741,7 @@ a.encabezado-buscar { text-decoration: none; }
 
 .cupon {
   display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
-  background: var(--durazno-suave); border: 2px dashed var(--durazno); border-radius: 14px; padding: 12px 14px;
+  background: var(--lila-suave); border: 2px dashed var(--lila); border-radius: 14px; padding: 12px 14px;
 }
 .cupon-porcentaje { font-family: var(--fuente-titulos); font-size: 30px; font-weight: 700; color: var(--morado); }
 .cupon-titulo { font-weight: 800; }
@@ -725,15 +763,15 @@ a.encabezado-buscar { text-decoration: none; }
 /* En el pago */
 .aviso-registro {
   display: block; margin-bottom: 14px; padding: 12px 14px; border-radius: 12px; text-decoration: none;
-  background: var(--durazno-suave); color: #7a3a1c; border: 1px solid var(--durazno); font-size: 14px; line-height: 1.4;
+  background: var(--lila-suave); color: var(--morado-oscuro); border: 1px solid var(--lila); font-size: 14px; line-height: 1.4;
 }
 .usar-cupon {
   display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 15px;
-  background: var(--menta); color: var(--menta-oscura); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  background: var(--azul-suave); color: var(--azul); border-radius: 12px; padding: 12px 14px; cursor: pointer;
 }
 .pago-formulario .usar-cupon { background: var(--lavanda-suave); color: var(--texto); margin: 0; }
 .usar-cupon input { width: 20px; height: 20px; accent-color: var(--morado); }
-.pago-descuento { font-size: 13px; font-weight: 800; color: var(--menta-oscura); }
+.pago-descuento { font-size: 13px; font-weight: 800; color: var(--azul); }
 .pago-montos { display: flex; flex-direction: column; align-items: flex-end; }
 .pago-montos s { font-size: 14px; color: var(--texto-suave); }
 .tarjetas-opciones { display: flex; flex-direction: column; gap: 8px; }
@@ -744,26 +782,37 @@ a.encabezado-buscar { text-decoration: none; }
 .tarjeta-opcion.activa { border-color: var(--morado); background: var(--lavanda); }
 
 /* En Mis pedidos */
-.aviso-cupon { background: var(--durazno-suave); border: 2px dashed var(--durazno); color: #7a3a1c; border-radius: var(--radio); padding: 14px 16px; margin-bottom: 14px; }
-.pedido-ahorro { font-weight: 700; color: var(--menta-oscura); font-size: 13px; }
+.aviso-cupon { background: var(--lila-suave); border: 2px dashed var(--lila); color: var(--morado-oscuro); border-radius: var(--radio); padding: 14px 16px; margin-bottom: 14px; }
+.pedido-ahorro { font-weight: 700; color: var(--azul); font-size: 13px; }
 
 /* =====================================================================
    PANEL DE ADMINISTRACIÓN
    ===================================================================== */
-.admin { min-height: 100vh; background: var(--fondo); }
+.admin { min-height: 100vh; background: var(--fondo); display: flex; flex-wrap: wrap; align-items: stretch; }
 a.panel-salir { text-decoration: none; display: inline-block; }
 
-.admin-pestanas {
-  display: flex; gap: 6px; overflow-x: auto; padding: 12px 24px 0;
-  border-bottom: 1px solid var(--borde); background: var(--superficie);
+/* Menú lateral morado. Con flex-wrap: en pantallas angostas baja y queda arriba */
+.admin-lateral {
+  flex: 1 1 230px; max-width: 100%; background: var(--morado); color: var(--crema);
+  padding: 22px 16px; display: flex; flex-direction: column; gap: 22px;
 }
-.admin-pestanas button {
-  flex-shrink: 0; border: none; background: none; padding: 10px 14px; font-weight: 800; color: var(--texto-suave);
-  border-bottom: 3px solid transparent;
+.admin-marca { display: flex; align-items: center; gap: 10px; }
+.admin-logo { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+.admin-marca-nombre { font-family: var(--fuente-titulos); font-size: 18px; font-weight: 700; line-height: 1.2; }
+.admin-marca-ayuda { font-size: 13px; opacity: 0.75; }
+.admin-menu { display: flex; flex-direction: column; gap: 4px; }
+.admin-menu button, .admin-menu-enlace {
+  text-align: left; border: none; background: none; color: var(--crema); font: inherit; font-weight: 800;
+  padding: 11px 12px; border-radius: 8px; text-decoration: none;
 }
-.admin-pestanas button.activa { color: var(--morado); border-bottom-color: var(--morado); }
+.admin-menu button:hover, .admin-menu-enlace:hover { background: rgba(255, 248, 240, 0.08); }
+.admin-menu button.activa { background: rgba(255, 248, 240, 0.16); }
+.admin-menu-enlace { margin-top: 8px; border: 1px solid rgba(255, 248, 240, 0.3); }
+.admin-usuario { margin-top: auto; font-size: 13px; opacity: 0.85; }
+.admin-usuario button { border: none; background: none; color: var(--crema); font: inherit; font-weight: 800; text-decoration: underline; padding: 0; }
 
-.admin-contenido { max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px; }
+.admin-contenido { flex: 999 1 560px; min-width: 0; max-width: 1240px; padding: 26px 30px 48px; }
+.admin-titulo { font-family: var(--fuente-titulos); font-size: 28px; color: var(--morado-oscuro); margin-bottom: 16px; }
 
 /* Cifras del día (números grandes en vez de gráficos) */
 .admin-cifras { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
@@ -771,12 +820,12 @@ a.panel-salir { text-decoration: none; display: inline-block; }
   display: flex; flex-direction: column; gap: 4px; padding: 16px 18px;
   background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra);
 }
-.cifra-destacada { background: var(--morado); border-color: var(--morado); color: #fff; }
+.cifra-destacada { background: var(--morado); border-color: var(--morado); color: var(--crema); }
 .cifra-etiqueta { font-size: 13px; font-weight: 700; opacity: 0.8; }
 .cifra-valor { font-family: var(--fuente-titulos); font-size: 30px; font-weight: 700; line-height: 1.1; }
 
 .admin-en-curso { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; font-weight: 700; color: var(--texto-suave); }
-.chip-estado { background: var(--lavanda-suave); color: var(--morado-oscuro); border-radius: 8px; padding: 5px 10px; font-size: 13px; }
+.chip-estado { border-radius: 8px; padding: 5px 10px; font-size: 13px; }
 
 .admin-dos { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); }
 .admin-caja { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 16px 18px; }
@@ -804,34 +853,281 @@ a.panel-salir { text-decoration: none; display: inline-block; }
   .tabla td::before { content: attr(data-label) ': '; color: var(--texto-suave); font-size: 12px; }
 }
 
-/* Carta editable */
-.admin-platos { list-style: none; padding: 0; margin: 12px 0 0; }
-.admin-platos li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borde); flex-wrap: wrap; }
-.admin-platos li.apagado .admin-plato-info { opacity: 0.5; }
-.admin-plato-info { flex: 1; min-width: 160px; }
-.admin-plato-nombre { font-weight: 800; }
-.admin-plato-detalle { font-size: 13px; color: var(--texto-suave); }
-.admin-plato-precio { display: flex; align-items: center; gap: 6px; font-weight: 700; }
-.admin-plato-precio input {
-  width: 80px; border: 1px solid var(--borde); border-radius: 8px; padding: 8px; font: inherit;
-  background: var(--fondo); color: var(--texto); text-align: right;
-}
-.admin-guardado { font-size: 13px; font-weight: 800; color: var(--menta-oscura); }
-
 /* Interruptor (switch) */
 .interruptor {
   width: 50px; height: 28px; flex-shrink: 0; border: none; border-radius: 999px; padding: 3px;
   background: var(--borde); position: relative; transition: background 0.2s;
 }
 .interruptor span {
-  display: block; width: 22px; height: 22px; border-radius: 50%; background: #fff;
+  display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--superficie);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform 0.2s;
 }
 .interruptor.encendido { background: var(--morado); }
 .interruptor.encendido span { transform: translateX(22px); }
 
+/* Celular: el menú lateral se vuelve una barra con las secciones en fila */
+@media (max-width: 800px) {
+  .admin-lateral { flex-basis: 100%; padding: 14px 16px; gap: 12px; }
+  .admin-menu { flex-direction: row; overflow-x: auto; }
+  .admin-menu button, .admin-menu-enlace { flex-shrink: 0; white-space: nowrap; padding: 9px 12px; }
+  .admin-menu-enlace { margin-top: 0; }
+  .admin-usuario { margin-top: 0; }
+}
 @media (max-width: 600px) {
-  .admin-pestanas { padding: 8px 16px 0; }
   .admin-contenido { padding: 16px 16px 40px; }
+  .admin-titulo { font-size: 24px; }
+  .admin-cifras { grid-template-columns: 1fr 1fr; gap: 10px; }   /* cifras de 2 en 2 en el celular */
   .cifra-valor { font-size: 24px; }
+}
+
+/* =====================================================================
+   MESAS, QR Y FORMULARIO DE PLATOS
+   ===================================================================== */
+/* Ventana emergente (modal) */
+.modal-fondo {
+  position: fixed; inset: 0; z-index: 50; background: rgba(43, 26, 53, 0.55);
+  display: grid; place-items: center; padding: 16px; overflow-y: auto;
+}
+.modal {
+  position: relative; width: min(420px, 100%); background: var(--superficie);
+  border-radius: var(--radio); padding: 24px 20px 20px; box-shadow: 0 12px 40px rgba(43, 26, 53, 0.35);
+}
+.modal-cerrar {
+  position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; border-radius: 10px;
+  background: var(--lavanda-suave); color: var(--morado); display: grid; place-items: center;
+}
+.modal-titulo { font-family: var(--fuente-titulos); color: var(--morado-oscuro); font-size: 24px; }
+.modal-ayuda { color: var(--texto-suave); font-size: 14px; margin: 4px 0 14px; }
+.modal-qr { text-align: center; }
+.modal-qr .qr { margin: 0 auto; max-width: 100%; height: auto; }
+.modal-url { font-size: 12px; color: var(--texto-suave); word-break: break-all; margin-top: 8px; }
+.qr { display: block; border-radius: 10px; border: 1px solid var(--borde); }
+.qr-cargando { background: var(--lavanda-suave); }
+
+/* Botones chicos "activos" (acción principal en el admin) */
+.boton-chico.activo { background: var(--morado); border-color: var(--morado); color: var(--superficie); }
+.boton-chico:disabled { opacity: 0.45; cursor: not-allowed; }
+a.boton-chico { text-decoration: none; display: inline-block; }
+
+/* ---------- Pantalla del MESERO ---------- */
+.mesero-cabecera {
+  position: sticky; top: 0; z-index: 10; background: var(--morado); color: var(--crema);
+  padding: 18px 18px 16px; border-radius: 0 0 22px 22px; display: flex; flex-direction: column; gap: 14px;
+}
+.mesero-fila { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.mesero-rol { font-size: 13px; opacity: 0.8; }
+.mesero-hola { font-family: var(--fuente-titulos); font-size: 24px; line-height: 1.1; }
+.mesero-derecha { display: flex; align-items: center; gap: 10px; }
+.mesero-derecha .panel-reloj { font-size: 22px; }
+.mesero-pestanas {
+  display: grid; grid-template-columns: 1fr 1fr; background: rgba(255, 248, 240, 0.14);
+  border-radius: 12px; padding: 4px; max-width: 520px;
+}
+.mesero-pestanas button { border: none; background: none; color: var(--crema); padding: 10px; border-radius: 9px; font: inherit; font-weight: 800; }
+.mesero-pestanas button.activa { background: var(--crema); color: var(--morado); }
+.mesero-contenido { max-width: 640px; margin: 0 auto; padding: 18px 16px 40px; display: flex; flex-direction: column; gap: 14px; }
+.mesero-aviso { font-weight: 800; color: var(--texto-suave); }
+.mesero-pedido {
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: 18px; padding: 14px;
+  display: flex; flex-direction: column; gap: 12px; box-shadow: 0 6px 18px rgba(46, 34, 51, 0.06);
+}
+.mesero-pedido-fila { display: flex; gap: 14px; }
+.mesero-mesa {
+  width: 82px; flex-shrink: 0; background: var(--azul-suave); color: var(--azul); border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0;
+}
+.mesero-mesa span { font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+.mesero-mesa strong { font-family: var(--fuente-titulos); font-size: 36px; line-height: 1; }
+.mesero-pedido-datos { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mesero-pedido-titulo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mesero-codigo { font-family: var(--fuente-titulos); font-size: 20px; font-weight: 700; }
+.mesero-hace { font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: var(--azul-suave); color: var(--azul); white-space: nowrap; }
+.mesero-items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; font-size: 15px; }
+.mesero-entregar {
+  border: none; border-radius: 12px; padding: 14px; font: inherit; font-size: 16px; font-weight: 800;
+  background: var(--morado); color: var(--crema);
+}
+.mesero-entregar:disabled { opacity: 0.6; cursor: wait; }
+.mesero-recientes { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.mesero-recientes h2 { font-size: 14px; font-weight: 800; color: var(--texto-suave); }
+.mesero-recientes div {
+  display: flex; justify-content: space-between; background: var(--lavanda-suave);
+  border-radius: 10px; padding: 10px 14px; font-size: 14px;
+}
+.panel-mesero .mesas-personal { max-width: 900px; margin: 0 auto; padding: 18px 16px 40px; }
+
+/* ---------- Tarjetas de mesas (mesero y admin) ---------- */
+.mesas-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 13px; font-weight: 800; }
+.mesas-chips span { border-radius: 8px; padding: 5px 10px; }
+.chip-espera { background: var(--rojo-suave); color: var(--rojo); }
+.chip-proceso { background: var(--lila); color: var(--morado); }
+.chip-listo { background: var(--azul-suave); color: var(--azul); }
+.chip-libre { background: var(--superficie); color: var(--texto-suave); border: 1px solid var(--borde); }
+.mesas-barra { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.mesas-resumen { color: var(--texto); font-size: 15px; }
+.mesas-filtro { display: flex; background: var(--lavanda-suave); border-radius: 10px; padding: 3px; }
+.mesas-filtro button { border: none; background: none; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 13px; color: var(--texto-suave); }
+.mesas-filtro button.activo { background: var(--superficie); color: var(--morado); box-shadow: var(--sombra); }
+.mesas-grilla { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+.mesa-tarjeta {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px;
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: 18px;
+}
+.mesa-fila { display: flex; align-items: center; gap: 14px; }
+.mesa-numero {
+  width: 58px; height: 58px; flex-shrink: 0; border-radius: 14px; display: grid; place-items: center;
+  font-family: var(--fuente-titulos); font-size: 26px; font-weight: 700;
+  background: var(--superficie-2); color: var(--texto-suave);
+}
+.mesa-texto { flex-grow: 1; min-width: 0; }
+.mesa-titulo { font-weight: 800; font-size: 17px; }
+.mesa-detalle { font-size: 14px; color: var(--texto-suave); }
+.mesa-consumo { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tono-espera .mesa-numero { background: var(--rojo-suave); color: var(--rojo); }
+.tono-espera .mesa-titulo { color: var(--rojo); }
+.tono-proceso .mesa-numero { background: var(--lila); color: var(--morado); }
+.tono-proceso .mesa-titulo { color: var(--morado); }
+.tono-listo .mesa-numero { background: var(--azul-suave); color: var(--azul); }
+.tono-listo .mesa-titulo { color: var(--azul); }
+.tono-libre .mesa-titulo { color: var(--texto-suave); }
+.mesa-liberar {
+  border: none; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800;
+  background: var(--morado); color: var(--crema);
+}
+.mesa-liberar:disabled { background: var(--lavanda-suave); color: var(--texto-suave); cursor: not-allowed; }
+.enlace-qr { align-self: flex-start; border: none; background: none; padding: 0; color: var(--morado); font-weight: 800; font-size: 13px; text-decoration: underline; }
+
+/* Cabecera de las cajas del admin con botones a la derecha */
+.admin-caja-cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.admin-caja-cabecera .admin-subtitulo { margin-bottom: 0; }
+.admin-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-caja .mesas-personal { margin-top: 16px; }
+
+/* Formulario de plato */
+.form-plato { display: flex; flex-direction: column; gap: 12px; width: min(480px, 100%); }
+.form-plato-foto { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+.form-plato-vista { width: 100%; height: 180px; border-radius: 12px; }
+.campo textarea, .campo select {
+  border: 1px solid var(--borde); border-radius: 12px; padding: 12px; font: inherit; font-size: 16px;
+  color: var(--texto); background: var(--superficie); width: 100%; resize: vertical;
+}
+.campo textarea:focus, .campo select:focus { outline: 2px solid var(--morado-medio); border-color: transparent; }
+
+/* Hoja de QR para imprimir */
+.imprimir { max-width: 1000px; margin: 0 auto; padding: 20px 16px 40px; }
+.imprimir-barra { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.imprimir-barra p { color: var(--texto-suave); font-weight: 700; }
+.imprimir-barra .boton { border: none; }
+.imprimir-hoja { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+.qr-tarjeta {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  background: var(--superficie); border: 2px dashed var(--morado-medio); border-radius: 14px; padding: 14px;
+  break-inside: avoid;
+}
+.qr-tarjeta-marca { display: flex; align-items: center; gap: 8px; font-family: var(--fuente-titulos); color: var(--morado); font-weight: 700; }
+.qr-tarjeta-logo { width: 34px; height: 34px; object-fit: contain; }
+.qr-tarjeta-mesa { font-family: var(--fuente-titulos); font-size: 28px; font-weight: 700; color: var(--morado-oscuro); }
+.qr-tarjeta-ayuda { font-size: 13px; font-weight: 700; color: var(--texto); }
+.qr-tarjeta-codigo { font-size: 11px; color: var(--texto-suave); letter-spacing: 1px; }
+
+@media print {
+  body, .imprimir { background: #fff; }
+  .imprimir { padding: 0; max-width: none; }
+  .imprimir-barra { display: none; }
+  .imprimir-hoja { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .qr-tarjeta { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 600px) {
+  .admin-plato-acciones { width: 100%; justify-content: flex-end; }
+  .modal { padding: 22px 16px 16px; }
+}
+
+/* =====================================================================
+   CARTA DEL ADMIN: buscador, categorías y tabla de platos
+   ===================================================================== */
+.carta-resumen { margin-top: 4px; }
+.carta-herramientas {
+  display: flex; flex-direction: column; gap: 12px; margin: 16px 0 6px;
+  position: sticky; top: 0; z-index: 5; background: var(--superficie); padding: 8px 0;
+}
+.carta-buscar {
+  display: flex; align-items: center; gap: 8px; max-width: 420px;
+  border: 1px solid var(--borde); border-radius: 10px; padding: 0 12px; background: var(--fondo); color: var(--texto-suave);
+}
+.carta-buscar:focus-within { outline: 2px solid var(--morado-medio); border-color: transparent; }
+.carta-buscar input { flex: 1; min-width: 0; border: none; background: none; padding: 11px 0; font: inherit; font-size: 15px; color: var(--texto); outline: none; }
+.carta-categorias { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.carta-categorias button {
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+  border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 14px;
+}
+.carta-categorias button span {
+  background: var(--lavanda-suave); color: var(--morado); border-radius: 6px;
+  padding: 1px 7px; font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.carta-categorias button.activa { background: var(--morado); border-color: var(--morado); color: var(--superficie); }
+.carta-categorias button.activa span { background: var(--morado-oscuro); color: var(--superficie); }
+
+.carta-grupo { margin-top: 18px; }
+.carta-grupo-titulo {
+  display: flex; align-items: center; gap: 8px; margin: 0;
+  font-family: var(--fuente-titulos); font-size: 18px; color: var(--morado-oscuro);
+  padding-bottom: 8px; border-bottom: 2px solid var(--morado);
+}
+.carta-grupo-titulo span { font-family: inherit; font-size: 13px; color: var(--texto-suave); font-weight: 700; }
+
+/* Las columnas: misma plantilla para la cabecera y las filas */
+.carta-columnas, .carta-fila {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr) 190px 90px 200px; align-items: center; gap: 14px;
+}
+.carta-columnas {
+  padding: 8px 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--texto-suave); border-bottom: 1px solid var(--borde);
+}
+.carta-lista { list-style: none; padding: 0; margin: 0; }
+.carta-fila { padding: 10px; border-bottom: 1px solid var(--borde); }
+.carta-fila:nth-child(even) { background: var(--superficie-2); }
+.carta-fila:hover { background: var(--lavanda-suave); }
+.carta-fila.apagado .carta-nombre, .carta-fila.apagado .carta-foto { opacity: 0.5; }
+
+/* Foto que es botón: al pasar el mouse dice "Cambiar" */
+.carta-foto {
+  position: relative; width: 64px; height: 64px; padding: 0; border: none; border-radius: 10px;
+  overflow: hidden; background: var(--lavanda-suave);
+}
+.carta-foto-capa {
+  position: absolute; inset: auto 0 0 0; padding: 3px 0; font-size: 11px; font-weight: 800;
+  background: rgba(43, 26, 53, 0.72); color: var(--superficie); opacity: 0; transition: opacity 0.15s;
+}
+.carta-foto:hover .carta-foto-capa, .carta-foto:focus-visible .carta-foto-capa, .carta-foto:disabled .carta-foto-capa { opacity: 1; }
+.carta-foto:disabled { cursor: wait; }
+/* En celular no hay "pasar el mouse": la etiqueta Cambiar se ve siempre */
+@media (hover: none) { .carta-foto-capa { opacity: 1; } }
+
+.carta-nombre { font-weight: 800; }
+.carta-detalle { font-size: 13px; color: var(--texto-suave); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.carta-agotado { background: var(--rojo-suave); color: var(--rojo); font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+.carta-precio { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.carta-precio input {
+  width: 78px; border: 1px solid var(--borde); border-radius: 8px; padding: 8px; font: inherit;
+  background: var(--fondo); color: var(--texto); text-align: right; font-variant-numeric: tabular-nums;
+}
+.carta-precio input:focus { outline: 2px solid var(--morado-medio); border-color: transparent; }
+.carta-acciones { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* Celular y tablet: cada plato se acomoda en dos filas */
+@media (max-width: 900px) {
+  .carta-columnas { display: none; }
+  .carta-fila {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas: 'foto info interruptor' 'foto precio precio' 'acciones acciones acciones';
+    gap: 8px 12px;
+  }
+  .carta-foto { grid-area: foto; }
+  .carta-info { grid-area: info; }
+  .carta-precio { grid-area: precio; }
+  .carta-fila .interruptor { grid-area: interruptor; }
+  .carta-acciones { grid-area: acciones; }
 }

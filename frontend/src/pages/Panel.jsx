@@ -1,18 +1,20 @@
 // =====================================================================
 //  Panel.jsx — PANTALLA DEL PERSONAL (una sola página para todos)
 //  Según el ROL del usuario muestra columnas distintas:
-//    cocina → "Por preparar" y "En preparación"
-//    mesero → "Listos para llevar"
+//    cocina → "En cola" y "En el fogón", un resumen arriba y los
+//             listos del mostrador abajo
+//    mesero → su propia pantalla (PanelMesero.jsx): para llevar y mesas
 //    caja   → "Por cobrar" (con buscador de código)
 //    admin  → todo
 //  Se actualiza EN TIEMPO REAL con Socket.IO.
 // =====================================================================
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { obtenerPedidosPersonal, cambiarEstadoPedido } from '../services/api.js';
+import { obtenerPedidosPersonal, cambiarEstadoPedido, obtenerMasPedidos } from '../services/api.js';
 import { obtenerSesion, cerrarSesion } from '../services/sesion.js';
 import { socket } from '../services/socket.js';
 import TarjetaPedidoPersonal from '../components/TarjetaPedidoPersonal.jsx';
+import PanelMesero from '../components/PanelMesero.jsx';
 import Logo from '../components/Logo.jsx';
 import { RESTAURANTE } from '../config.js';
 
@@ -24,7 +26,7 @@ const COLUMNAS = {
   listo:          { titulo: 'Para llevar', ayuda: 'Listos en el mostrador', accion: { estado: 'entregado', texto: 'Entregado en la mesa' } },
 };
 const VISTA_ROL = {
-  cocina: { titulo: 'Cocina', estados: ['pagado', 'en_preparacion'] },
+  cocina: { titulo: 'Cocina', estados: ['pagado', 'en_preparacion'], mostrador: true },
   mesero: { titulo: 'Meseros', estados: ['listo'] },
   caja:   { titulo: 'Caja', estados: ['pendiente_pago'] },
   admin:  { titulo: 'Administración', estados: ['pendiente_pago', 'pagado', 'en_preparacion', 'listo'] },
@@ -62,6 +64,7 @@ export default function Panel() {
   const [ocupado, setOcupado] = useState(null);       // id del pedido que se está guardando
   const [nuevos, setNuevos] = useState([]);           // ids recién llegados (para resaltarlos)
   const [buscar, setBuscar] = useState('');           // buscador de código (caja)
+  const [estrella, setEstrella] = useState(null);     // cocina: el plato más pedido
   const conocidos = useRef(null);                     // ids que ya vimos (null = primera carga)
 
   const cargar = useCallback(async () => {
@@ -87,6 +90,7 @@ export default function Panel() {
   useEffect(() => {
     if (!vista) return;
     cargar();
+    if (vista.mostrador) obtenerMasPedidos(1).then((lista) => setEstrella(lista[0] || null)).catch(() => {});
     // TIEMPO REAL: cuando el backend avisa, volvemos a pedir la lista
     socket.on('pedido:nuevo', cargar);
     socket.on('pedido:actualizado', cargar);
@@ -101,21 +105,41 @@ export default function Panel() {
 
   if (!sesion || !vista) return <Navigate to="/personal/login" replace />;
 
+  // Cambia el estado de un pedido. Devuelve true si se guardó.
   async function avanzar(pedido, estado) {
     setOcupado(pedido.id);
+    let ok = true;
     try {
       await cambiarEstadoPedido(pedido.id, estado);
     } catch (e) {
       setError(e.message);
+      ok = false;
     }
     setOcupado(null);
     cargar();
+    return ok;
   }
 
   function salir() {
     cerrarSesion();
     navigate('/personal/login', { replace: true });
   }
+
+  // El mesero tiene su propia pantalla, pensada para el celular
+  if (sesion.usuario.rol === 'mesero') {
+    return (
+      <PanelMesero usuario={sesion.usuario} pedidos={pedidos} onEntregar={avanzar}
+        ocupado={ocupado} nuevos={nuevos} reloj={<Reloj />} onSalir={salir} />
+    );
+  }
+
+  // Cocina: números para la franja de resumen
+  const enCocina = pedidos.filter((p) => p.estado === 'pagado' || p.estado === 'en_preparacion');
+  const listos = pedidos.filter((p) => p.estado === 'listo');
+  const promedio = enCocina.length
+    ? Math.round(enCocina.reduce((suma, p) => suma + p.minutos, 0) / enCocina.length)
+    : 0;
+  const urgentes = enCocina.filter((p) => p.minutos >= 15).length;
 
   // Caja: filtrar por código escrito (A5, a5, 5...)
   const filtro = buscar.trim().toUpperCase().replace(/^A?/, 'A');
@@ -143,6 +167,18 @@ export default function Panel() {
       </header>
 
       {error && <p className="error panel-error">{error}</p>}
+
+      {/* Cocina: resumen rápido arriba */}
+      {vista.mostrador && (
+        <div className="panel-resumen">
+          <span>{enCocina.length} por preparar</span>
+          <span>Tiempo promedio: {promedio} min</span>
+          {urgentes > 0 && (
+            <span className="alerta">{urgentes} {urgentes === 1 ? 'pedido pasa' : 'pedidos pasan'} de 15 min</span>
+          )}
+          {estrella && <span>Estrella de la casa: {estrella.nombre}</span>}
+        </div>
+      )}
 
       {sesion.usuario.rol === 'caja' && (
         <input className="panel-buscar" placeholder="Buscar código del cliente (ej: A5)"
@@ -179,6 +215,18 @@ export default function Panel() {
           );
         })}
       </div>
+
+      {/* Cocina: lo que ya está listo, esperando al mesero */}
+      {vista.mostrador && (
+        <section className="panel-mostrador">
+          <h2>Listos en el mostrador</h2>
+          {listos.length === 0 && <span className="panel-mostrador-ayuda">Ninguno por ahora</span>}
+          {listos.map((p) => (
+            <span key={p.id} className="panel-mostrador-item">{p.codigo} · Mesa {p.mesa}</span>
+          ))}
+          {listos.length > 0 && <span className="panel-mostrador-ayuda">El mesero los lleva a la mesa</span>}
+        </section>
+      )}
     </div>
   );
 }

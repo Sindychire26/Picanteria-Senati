@@ -1,7 +1,8 @@
 // =====================================================================
 //  TarjetaPedidoPersonal.jsx — Un pedido como "COMANDA" de papel
 //  - La MESA en un círculo grande (se lee de lejos)
-//  - Semáforo de tiempo: verde (a tiempo), ámbar (demora), rojo (urge)
+//  - Tiempo: normal (a tiempo), rojo suave (demora), rocoto (urge)
+//  - La línea de arriba tiene el color de su estado (espera / proceso / listo)
 //  - Los platos con su cantidad y las notas resaltadas
 //  - El botón de la siguiente acción
 // =====================================================================
@@ -18,7 +19,7 @@ export default function TarjetaPedidoPersonal({ pedido, accion, onAccion, ocupad
   const cantidadPlatos = pedido.items.reduce((s, i) => s + i.cantidad, 0);
 
   return (
-    <article className={`comanda ${nuevo ? 'comanda-nueva' : ''} comanda-${color}`}>
+    <article className={`comanda comanda-estado-${pedido.estado} ${nuevo ? 'comanda-nueva' : ''} comanda-${color}`}>
       {/* Cabecera: mesa + código + tiempo */}
       <div className="comanda-cabecera">
         <div className="comanda-mesa">

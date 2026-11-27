@@ -15,15 +15,22 @@ import 'dotenv/config';            // lee el archivo .env y lo pone en process.e
 const pool = process.env.DATABASE_URL
   ? new pg.Pool({ connectionString: process.env.DATABASE_URL })
   : new pg.Pool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
 
 // PostgreSQL devuelve los NUMERIC (precios) como texto ("38.00") para no
 // perder precisión. Le decimos que los convierta a número de JavaScript.
 pg.types.setTypeParser(1700, (valor) => parseFloat(valor));
+
+// Si la base corta una conexión que estaba sin usar (Neon lo hace cuando
+// se "duerme"), el pool avisa con un 'error'. Sin esta línea, Node
+// tumbaría TODO el servidor. Con ella solo se anota y se sigue.
+pool.on('error', (error) => {
+  console.error('Conexión a la base cerrada:', error.message);
+});
 
 export default pool;

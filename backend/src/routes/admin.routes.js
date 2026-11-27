@@ -3,7 +3,9 @@
 // =====================================================================
 import { Router } from 'express';
 import { verificarToken, permitirRoles } from '../middlewares/auth.js';
-import { resumen, movimientos, platosAdmin, actualizarPlato } from '../controllers/admin.controller.js';
+import {
+  resumen, movimientos, platosAdmin, crearPlato, actualizarPlato, eliminarPlato,
+} from '../controllers/admin.controller.js';
 
 const router = Router();
 
@@ -13,6 +15,8 @@ router.use('/admin', verificarToken, permitirRoles('admin'));
 router.get('/admin/resumen', resumen);
 router.get('/admin/movimientos', movimientos);
 router.get('/admin/platos', platosAdmin);
+router.post('/admin/platos', crearPlato);
 router.patch('/admin/platos/:id', actualizarPlato);
+router.delete('/admin/platos/:id', eliminarPlato);
 
 export default router;

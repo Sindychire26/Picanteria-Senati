@@ -1,20 +1,26 @@
 // =====================================================================
 //  Admin.jsx — PANEL DE ADMINISTRACIÓN (solo rol "admin")
-//  3 pestañas:
+//  4 pestañas:
 //   · Resumen: ventas de hoy, pedidos, ticket promedio, métodos de pago,
 //              lo más vendido y lo que está en curso
 //   · Movimientos: cada pedido con su pago, quién cobró y quién entregó
-//   · Carta: activar/desactivar platos y cambiar precios
+//   · Mesas: ocupadas, tiempo, consumo, estado de pedidos, QR y agregar mesas
+//   · Carta: por categorías, buscador, cambiar foto, precios, disponibilidad,
+//            agregar, editar y eliminar platos (ver components/CartaAdmin.jsx)
 //  Se actualiza en tiempo real cuando llegan o cambian pedidos.
 // =====================================================================
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import {
-  obtenerResumen, obtenerMovimientos, obtenerPlatosAdmin, actualizarPlato,
+  obtenerResumen, obtenerMovimientos, obtenerPlatosAdmin, obtenerCategorias, agregarMesa,
 } from '../services/api.js';
 import { obtenerSesion, cerrarSesion } from '../services/sesion.js';
 import { socket } from '../services/socket.js';
 import Logo from '../components/Logo.jsx';
+import { RESTAURANTE } from '../config.js';
+import MesasPersonal from '../components/MesasPersonal.jsx';
+import ModalQR from '../components/ModalQR.jsx';
+import CartaAdmin from '../components/CartaAdmin.jsx';
 
 const soles = (n) => `S/ ${Number(n).toFixed(2)}`;
 const NOMBRE_METODO = { yape: 'Yape', plin: 'Plin', tarjeta: 'Tarjeta', efectivo: 'Efectivo' };
@@ -42,6 +48,9 @@ function Barras({ filas, etiqueta, valor, texto }) {
   );
 }
 
+// Las secciones del menú lateral: [id, texto]
+const SECCIONES = [['resumen', 'Resumen de hoy'], ['movimientos', 'Movimientos'], ['mesas', 'Mesas'], ['carta', 'Carta']];
+
 export default function Admin() {
   const navigate = useNavigate();
   const sesion = obtenerSesion();
@@ -51,9 +60,10 @@ export default function Admin() {
   const [resumen, setResumen] = useState(null);
   const [movs, setMovs] = useState([]);
   const [platos, setPlatos] = useState([]);
-  const [precios, setPrecios] = useState({});        // precios que se están editando
-  const [guardado, setGuardado] = useState(null);    // id del plato recién guardado
   const [error, setError] = useState('');
+  const [aviso, setAviso] = useState('');             // mensaje verde de "listo"
+  const [categorias, setCategorias] = useState([]);
+  const [mesaQR, setMesaQR] = useState(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -71,6 +81,7 @@ export default function Admin() {
   useEffect(() => {
     if (!esAdmin) return;
     cargar();
+    obtenerCategorias().then(setCategorias).catch(() => {});
     // Tiempo real: cualquier pedido nuevo o cambio de estado actualiza los números
     socket.on('pedido:nuevo', cargar);
     socket.on('pedido:actualizado', cargar);
@@ -82,24 +93,16 @@ export default function Admin() {
 
   if (!esAdmin) return <Navigate to="/personal/login" replace />;
 
-  async function cambiarDisponible(plato) {
-    try {
-      await actualizarPlato(plato.id, { disponible: !plato.disponible });
-      cargar();
-    } catch (e) {
-      setError(e.message);
-    }
+  // Muestra un mensaje verde por unos segundos
+  function avisar(texto) {
+    setAviso(texto);
+    setTimeout(() => setAviso(''), 3500);
   }
 
-  async function guardarPrecio(plato) {
-    const nuevo = Number(precios[plato.id]);
-    if (!(nuevo > 0)) return setError('Escribe un precio válido');
+  async function nuevaMesa() {
     try {
-      await actualizarPlato(plato.id, { precio: nuevo });
-      setPrecios((p) => { const copia = { ...p }; delete copia[plato.id]; return copia; });
-      setGuardado(plato.id);
-      setTimeout(() => setGuardado(null), 1500);
-      cargar();
+      const mesa = await agregarMesa();
+      avisar(`Mesa ${mesa.numero} agregada. Ya puedes imprimir su QR.`);
     } catch (e) {
       setError(e.message);
     }
@@ -114,28 +117,51 @@ export default function Admin() {
 
   return (
     <div className="admin">
-      <header className="panel-cabecera">
-        <div className="panel-marca">
-          <Logo className="panel-logo" />
+      {/* Menú lateral (en el celular se vuelve una barra arriba) */}
+      <aside className="admin-lateral">
+        <div className="admin-marca">
+          <Logo className="admin-logo" />
           <div>
-            <h1 className="panel-titulo">Administración</h1>
-            <p className="panel-usuario">{sesion.usuario.nombre}</p>
+            <p className="admin-marca-nombre">{RESTAURANTE.nombre}</p>
+            <p className="admin-marca-ayuda">Panel de administración</p>
           </div>
         </div>
-        <div className="panel-derecha">
-          <Link to="/personal" className="panel-salir">Pedidos en vivo</Link>
-          <button className="panel-salir" onClick={salir}>Salir</button>
+        <nav className="admin-menu">
+          {SECCIONES.map(([id, texto]) => (
+            <button key={id} className={pestana === id ? 'activa' : ''} onClick={() => setPestana(id)}
+              aria-current={pestana === id ? 'page' : undefined}>
+              {texto}
+            </button>
+          ))}
+          <Link to="/personal" className="admin-menu-enlace">Pedidos en vivo</Link>
+        </nav>
+        <div className="admin-usuario">
+          {sesion.usuario.nombre} · <button onClick={salir}>Salir</button>
         </div>
-      </header>
-
-      <nav className="admin-pestanas">
-        {[['resumen', 'Resumen de hoy'], ['movimientos', 'Movimientos'], ['carta', 'Carta']].map(([id, texto]) => (
-          <button key={id} className={pestana === id ? 'activa' : ''} onClick={() => setPestana(id)}>{texto}</button>
-        ))}
-      </nav>
+      </aside>
 
       <main className="admin-contenido">
+        <h1 className="admin-titulo">{SECCIONES.find(([id]) => id === pestana)[1]}</h1>
         {error && <p className="error">{error}</p>}
+        {aviso && <p className="aviso-exito">{aviso}</p>}
+
+        {/* ------------------------- MESAS ------------------------- */}
+        {pestana === 'mesas' && (
+          <section className="admin-caja">
+            <div className="admin-caja-cabecera">
+              <h2 className="admin-subtitulo">Mesas del local</h2>
+              <div className="admin-acciones">
+                <Link to="/personal/qr" className="boton-chico">Imprimir todos los QR</Link>
+                <button className="boton-chico activo" onClick={nuevaMesa}>+ Agregar mesa</button>
+              </div>
+            </div>
+            <p className="admin-nota">
+              Una mesa se ocupa cuando escanean su QR. Si en 15 minutos no piden nada, se libera sola;
+              si ya pidieron, el mesero la libera cuando los clientes se van.
+            </p>
+            <MesasPersonal onVerQR={setMesaQR} />
+          </section>
+        )}
 
         {/* ------------------------- RESUMEN ------------------------- */}
         {pestana === 'resumen' && resumen && (
@@ -161,10 +187,10 @@ export default function Admin() {
 
             <div className="admin-en-curso">
               <span>Ahora mismo:</span>
-              <span className="chip-estado">{enCurso.pendiente_pago || 0} por cobrar</span>
-              <span className="chip-estado">{enCurso.pagado || 0} en cola</span>
-              <span className="chip-estado">{enCurso.en_preparacion || 0} cocinando</span>
-              <span className="chip-estado">{enCurso.listo || 0} para llevar</span>
+              <span className="chip-estado estado-pendiente_pago">{enCurso.pendiente_pago || 0} por cobrar</span>
+              <span className="chip-estado estado-pagado">{enCurso.pagado || 0} en cola</span>
+              <span className="chip-estado estado-en_preparacion">{enCurso.en_preparacion || 0} cocinando</span>
+              <span className="chip-estado estado-listo">{enCurso.listo || 0} para llevar</span>
             </div>
 
             <div className="admin-dos">
@@ -233,48 +259,17 @@ export default function Admin() {
 
         {/* ------------------------- CARTA ------------------------- */}
         {pestana === 'carta' && (
-          <section className="admin-caja">
-            <h2 className="admin-subtitulo">Platos de la carta</h2>
-            <p className="admin-nota">
-              Desactiva un plato cuando se acabe (o el adobo, que es solo de domingo): desaparece
-              al instante de la carta de los clientes y Misti deja de recomendarlo.
-            </p>
-            <ul className="admin-platos">
-              {platos.map((p) => (
-                <li key={p.id} className={p.disponible ? '' : 'apagado'}>
-                  <div className="admin-plato-info">
-                    <p className="admin-plato-nombre">{p.nombre}</p>
-                    <p className="admin-plato-detalle">{p.categoria} · pedido {p.veces_pedido} {p.veces_pedido === 1 ? 'vez' : 'veces'}</p>
-                  </div>
-                  <div className="admin-plato-precio">
-                    <span>S/</span>
-                    <input
-                      inputMode="decimal"
-                      value={precios[p.id] ?? p.precio.toFixed(2)}
-                      onChange={(e) => setPrecios({ ...precios, [p.id]: e.target.value.replace(/[^\d.]/g, '') })}
-                      aria-label={`Precio de ${p.nombre}`}
-                    />
-                    {precios[p.id] !== undefined && Number(precios[p.id]) !== p.precio && (
-                      <button className="boton-chico" onClick={() => guardarPrecio(p)}>Guardar</button>
-                    )}
-                    {guardado === p.id && <span className="admin-guardado">Guardado</span>}
-                  </div>
-                  {/* Interruptor de disponible */}
-                  <button
-                    className={`interruptor ${p.disponible ? 'encendido' : ''}`}
-                    onClick={() => cambiarDisponible(p)}
-                    role="switch"
-                    aria-checked={p.disponible}
-                    aria-label={`${p.nombre} disponible`}
-                  >
-                    <span />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <CartaAdmin
+            platos={platos}
+            categorias={categorias}
+            onCambio={cargar}
+            onAviso={avisar}
+            onError={setError}
+          />
         )}
       </main>
+
+      {mesaQR && <ModalQR mesa={mesaQR} onCerrar={() => setMesaQR(null)} />}
     </div>
   );
 }

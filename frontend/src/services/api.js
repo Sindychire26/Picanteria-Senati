@@ -53,6 +53,12 @@ export const preguntarAsistente = (mensajes) =>
 // --- Mesas ---
 export const obtenerMesas = () => pedir('/mesas');
 export const obtenerMesa = (codigo) => pedir(`/mesas/${codigo}`);
+// Al abrir la carta (escanear el QR) la mesa queda ocupada
+export const ocuparMesa = (codigo, cuentaId) =>
+  pedir(`/mesas/${codigo}/ocupar`, { method: 'POST', body: JSON.stringify({ cuentaId }) });
+// Personal: detalle de las mesas y liberar (mesero o admin)
+export const obtenerMesasPersonal = () => pedir('/personal/mesas');
+export const liberarMesa = (mesaId) => pedir(`/personal/mesas/${mesaId}/liberar`, { method: 'PATCH' });
 
 // --- Personal (requieren haber iniciado sesión) ---
 export const iniciarSesion = (usuario, password) =>
@@ -75,5 +81,12 @@ export const borrarTarjeta = (id) => pedir(`/clientes/metodos/${id}`, { method: 
 export const obtenerResumen = () => pedir('/admin/resumen');
 export const obtenerMovimientos = () => pedir('/admin/movimientos');
 export const obtenerPlatosAdmin = () => pedir('/admin/platos');
+export const crearPlato = (datos) =>
+  pedir('/admin/platos', { method: 'POST', body: JSON.stringify(datos) });
 export const actualizarPlato = (id, cambios) =>
   pedir(`/admin/platos/${id}`, { method: 'PATCH', body: JSON.stringify(cambios) });
+export const eliminarPlato = (id) => pedir(`/admin/platos/${id}`, { method: 'DELETE' });
+// La foto viaja como texto (data URL); el backend responde con su dirección { url }
+export const subirFoto = (imagen) =>
+  pedir('/admin/fotos', { method: 'POST', body: JSON.stringify({ imagen }) });
+export const agregarMesa = () => pedir('/admin/mesas', { method: 'POST' });

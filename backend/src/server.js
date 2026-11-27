@@ -6,9 +6,9 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import 'dotenv/config';
 import pool from './db.js';
-import { existsSync } from 'fs';
 import platosRoutes from './routes/platos.routes.js';
 import mesasRoutes from './routes/mesas.routes.js';
 import promocionesRoutes from './routes/promociones.routes.js';
@@ -18,13 +18,16 @@ import personalRoutes from './routes/personal.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import clientesRoutes from './routes/clientes.routes.js';
 import adminRoutes from './routes/admin.routes.js';
-import { iniciarSocket } from './socket.js';
+import { iniciarSocket, avisar } from './socket.js';
+import { liberarMesasSinPedidos } from './cuentas.js';
+import { actualizarBaseDeDatos } from './migraciones.js';
+import fotosRoutes from './routes/fotos.routes.js';
 
 const app = express();
 
 // --- Middlewares (se ejecutan en CADA petición, antes de las rutas) ---
 app.use(cors());          // permite que React (otro puerto) llame a esta API
-app.use(express.json());  // convierte el body JSON de las peticiones en objeto
+app.use(express.json({ limit: '3mb' }));  // body JSON → objeto (3 MB: alcanza para una foto achicada)
 
 // --- Archivos estáticos (fotos) ---
 // Todo lo que está en backend/public/imagenes se puede ver en el navegador.
@@ -53,6 +56,7 @@ app.use('/api', personalRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', clientesRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', fotosRoutes);
 
 // --- Frontend ya compilado (solo cuando está publicado en internet) ---
 // En tu PC, React corre aparte con Vite (puerto 5173).
@@ -73,6 +77,24 @@ const servidor = createServer(app);
 iniciarSocket(servidor);
 
 const PORT = process.env.PORT || 3000;
+// Cada minuto: las mesas ocupadas hace 15 min sin ningún pedido se liberan solas
+setInterval(async () => {
+  try {
+    const liberadas = await liberarMesasSinPedidos();
+    if (liberadas > 0) avisar('mesas:actualizadas');
+  } catch (error) {
+    console.error('Error liberando mesas:', error.message);
+  }
+}, 60 * 1000);
+
+// Primero ponemos la base al día (columnas y tablas nuevas) y LUEGO arrancamos.
+// Si falla, igual arrancamos y avisamos en la terminal.
+try {
+  await actualizarBaseDeDatos();
+} catch (error) {
+  console.error('No se pudo actualizar la base de datos:', error.message);
+}
+
 servidor.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });

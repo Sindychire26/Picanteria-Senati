@@ -12,6 +12,7 @@ import Login from './pages/Login.jsx';
 import Panel from './pages/Panel.jsx';
 import Cuenta from './pages/Cuenta.jsx';
 import Admin from './pages/Admin.jsx';
+import ImprimirQR from './pages/ImprimirQR.jsx';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/personal/login" element={<Login />} />
       <Route path="/personal" element={<Panel />} />
       <Route path="/personal/admin" element={<Admin />} />
+      <Route path="/personal/qr" element={<ImprimirQR />} />
 
       {/* Cualquier otra URL */}
       <Route path="*" element={<Inicio />} />

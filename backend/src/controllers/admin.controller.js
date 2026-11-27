@@ -96,15 +96,18 @@ export async function movimientos(req, res) {
 }
 
 // ---------------------------------------------------------------------
-// GET /api/admin/platos  → TODOS los platos (también los no disponibles)
+// GET /api/admin/platos  → TODOS los platos (también los no disponibles),
+// menos los eliminados
 // ---------------------------------------------------------------------
 export async function platosAdmin(req, res) {
   try {
     const { rows } = await pool.query(`
-      SELECT p.id, p.nombre, p.precio, p.disponible, p.imagen_url, c.nombre AS categoria, v.veces_pedido
+      SELECT p.id, p.nombre, p.descripcion, p.precio, p.disponible, p.imagen_url,
+             p.categoria_id, c.nombre AS categoria, v.veces_pedido
       FROM   platos p
       JOIN   categorias c           ON c.id = p.categoria_id
       JOIN   v_platos_mas_pedidos v ON v.id = p.id
+      WHERE  p.eliminado = FALSE
       ORDER BY c.orden, p.nombre
     `);
     res.json(rows);
@@ -114,36 +117,119 @@ export async function platosAdmin(req, res) {
   }
 }
 
+// Revisa los datos de un plato. "parcial" = al editar, los campos pueden faltar.
+// Devuelve el mensaje de error, o null si todo está bien.
+function validarPlato(d, parcial) {
+  const falta = (campo) => d[campo] === undefined && !parcial;
+  if (falta('nombre') || (d.nombre !== undefined && !(String(d.nombre).trim().length >= 3))) {
+    return 'El nombre debe tener al menos 3 letras';
+  }
+  if (falta('categoria_id') || (d.categoria_id !== undefined && !Number.isInteger(Number(d.categoria_id)))) {
+    return 'Elige una categoría';
+  }
+  if (falta('precio') || (d.precio !== undefined && !(Number(d.precio) > 0 && Number(d.precio) < 10000))) {
+    return 'Precio no válido';
+  }
+  if (d.disponible !== undefined && typeof d.disponible !== 'boolean') return 'Valor de disponible no válido';
+  if (d.imagen_url && !/^\/(api\/fotos|imagenes)\//.test(d.imagen_url)) return 'Foto no válida';
+  return null;
+}
+
 // ---------------------------------------------------------------------
-// PATCH /api/admin/platos/:id   Body: { disponible?, precio? }
+// POST /api/admin/platos  → plato NUEVO
+// Body: { nombre, descripcion, categoria_id, precio, imagen_url?, disponible? }
+// ---------------------------------------------------------------------
+export async function crearPlato(req, res) {
+  const error = validarPlato(req.body, false);
+  if (error) return res.status(400).json({ mensaje: error });
+
+  const { nombre, descripcion, categoria_id, precio, imagen_url, disponible } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO platos (nombre, descripcion, categoria_id, precio, imagen_url, disponible)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, nombre, precio, disponible`,
+      [nombre.trim(), descripcion?.trim() || null, Number(categoria_id), Number(precio),
+       imagen_url || null, disponible ?? true]
+    );
+    avisarPedido('carta:actualizada', rows[0]);   // 📢 aparece en las cartas abiertas
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    // 23503 = la categoría no existe (llave foránea)
+    if (e.code === '23503') return res.status(400).json({ mensaje: 'Esa categoría no existe' });
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo crear el plato' });
+  }
+}
+
+// ---------------------------------------------------------------------
+// PATCH /api/admin/platos/:id  → editar (solo los campos que vengan)
+// Body: { nombre?, descripcion?, categoria_id?, precio?, imagen_url?, disponible? }
 // ---------------------------------------------------------------------
 export async function actualizarPlato(req, res) {
   const id = Number(req.params.id);
-  const { disponible, precio } = req.body;
+  const error = validarPlato(req.body, true);
+  if (error) return res.status(400).json({ mensaje: error });
 
-  if (disponible !== undefined && typeof disponible !== 'boolean') {
-    return res.status(400).json({ mensaje: 'Valor de disponible no válido' });
-  }
-  if (precio !== undefined && !(Number(precio) > 0 && Number(precio) < 10000)) {
-    return res.status(400).json({ mensaje: 'Precio no válido' });
-  }
-
+  const { nombre, descripcion, categoria_id, precio, imagen_url, disponible } = req.body;
   try {
     // COALESCE: si no mandan un campo (null), se queda el valor que tenía
     const { rows } = await pool.query(
       `UPDATE platos
-       SET disponible = COALESCE($2, disponible),
-           precio     = COALESCE($3, precio)
-       WHERE id = $1
+       SET nombre       = COALESCE($2, nombre),
+           descripcion  = COALESCE($3, descripcion),
+           categoria_id = COALESCE($4, categoria_id),
+           precio       = COALESCE($5, precio),
+           imagen_url   = COALESCE($6, imagen_url),
+           disponible   = COALESCE($7, disponible)
+       WHERE id = $1 AND eliminado = FALSE
        RETURNING id, nombre, precio, disponible`,
-      [id, disponible ?? null, precio !== undefined ? Number(precio) : null]
+      [id, nombre?.trim() ?? null, descripcion?.trim() ?? null,
+       categoria_id !== undefined ? Number(categoria_id) : null,
+       precio !== undefined ? Number(precio) : null, imagen_url ?? null, disponible ?? null]
     );
     if (rows.length === 0) return res.status(404).json({ mensaje: 'Plato no encontrado' });
 
     avisarPedido('carta:actualizada', rows[0]);   // 📢 las cartas abiertas se actualizan solas
     res.json(rows[0]);
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
+    if (e.code === '23503') return res.status(400).json({ mensaje: 'Esa categoría no existe' });
+    console.error(e);
     res.status(500).json({ mensaje: 'No se pudo actualizar el plato' });
+  }
+}
+
+// ---------------------------------------------------------------------
+// DELETE /api/admin/platos/:id
+// · Si NUNCA fue pedido ni está en una promo → se BORRA de verdad.
+// · Si ya fue pedido o está en una promo → NO se borra (rompería el
+//   historial de ventas: las llaves foráneas lo impiden). Se OCULTA:
+//   eliminado = true y disponible = false. Deja de verse en la carta
+//   y en el admin, pero las ventas pasadas siguen intactas.
+// ---------------------------------------------------------------------
+export async function eliminarPlato(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ mensaje: 'Plato no válido' });
+
+  try {
+    // ¿Alguna tabla apunta a este plato?
+    const { rows: [{ usado }] } = await pool.query(`
+      SELECT EXISTS (SELECT 1 FROM detalle_pedido WHERE plato_id = $1)
+          OR EXISTS (SELECT 1 FROM promociones WHERE plato_id = $1 OR plato_regalo_id = $1)
+          OR EXISTS (SELECT 1 FROM combo_platos WHERE plato_id = $1) AS usado
+    `, [id]);
+
+    const r = usado
+      ? await pool.query('UPDATE platos SET eliminado = TRUE, disponible = FALSE WHERE id = $1 AND eliminado = FALSE RETURNING id', [id])
+      : await pool.query('DELETE FROM platos WHERE id = $1 RETURNING id', [id]);
+    if (r.rowCount === 0) return res.status(404).json({ mensaje: 'Plato no encontrado' });
+
+    avisarPedido('carta:actualizada', { id });   // 📢 desaparece de las cartas abiertas
+    res.json(usado
+      ? { modo: 'ocultado', mensaje: 'El plato ya tenía pedidos: se ocultó para no perder el historial de ventas' }
+      : { modo: 'borrado', mensaje: 'Plato eliminado' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ mensaje: 'No se pudo eliminar el plato' });
   }
 }

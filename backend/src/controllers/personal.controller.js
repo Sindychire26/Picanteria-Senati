@@ -8,7 +8,7 @@ import { avisarPedido } from '../socket.js';
 
 // Qué estados ve cada rol en su pantalla
 const ESTADOS_POR_ROL = {
-  cocina: ['pagado', 'en_preparacion'],
+  cocina: ['pagado', 'en_preparacion', 'listo'],   // 'listo' solo para verlos en el mostrador
   mesero: ['listo'],
   caja:   ['pendiente_pago'],
   admin:  ['pendiente_pago', 'pagado', 'en_preparacion', 'listo'],
