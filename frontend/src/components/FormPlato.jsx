@@ -13,7 +13,7 @@ import FotoPlato from './FotoPlato.jsx';
 import { NIVELES_PICANTE } from './Picante.jsx';
 
 // Nombres de tamaño que más se usan: un toque y se llenan los dos
-const SUGERENCIAS = [['Vaso', 'Jarra'], ['Personal', '1 litro'], ['Media', 'Entera']];
+const SUGERENCIAS = [['Vaso', 'Jarra'], ['Personal', '1 litro']];
 import { IconoCerrar } from './Iconos.jsx';
 
 export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
@@ -36,6 +36,13 @@ export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
+  // ¿La categoría elegida es de bebidas? (busca la palabra "bebida" en su nombre)
+  //   · Bebidas → pueden tener dos tamaños (vaso/jarra, personal/1 litro)
+  //   · Comidas → tienen nivel de picante
+  const categoriaElegida = categorias.find((c) => c.id === Number(datos.categoria_id));
+  const esBebida = /bebida/i.test(categoriaElegida?.nombre || '');
+  const conTamanos = esBebida && datos.dosTamanos;
+
   // Cambia un campo y deja los demás igual
   const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
 
@@ -55,7 +62,7 @@ export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
     if (datos.nombre.trim().length < 3) return setError('El nombre debe tener al menos 3 letras');
     if (!datos.categoria_id) return setError('Elige una categoría');
     if (!(Number(datos.precio) > 0)) return setError('Escribe un precio válido');
-    if (datos.dosTamanos) {
+    if (conTamanos) {
       if (!datos.nombre_chico.trim() || !datos.nombre_grande.trim()) return setError('Ponle nombre a los dos tamaños (ej: Vaso y Jarra)');
       if (!(Number(datos.precio_grande) > 0)) return setError(`Escribe el precio de ${datos.nombre_grande || 'el tamaño grande'}`);
     }
@@ -73,11 +80,11 @@ export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
         descripcion: datos.descripcion.trim(),
         categoria_id: Number(datos.categoria_id),
         precio: Number(datos.precio),
-        picante: Number(datos.picante),
-        // Tamaños: si no tiene dos tamaños, mandamos null para que quede con un solo precio
-        precio_grande: datos.dosTamanos ? Number(datos.precio_grande) : null,
-        nombre_chico: datos.dosTamanos ? datos.nombre_chico.trim() : null,
-        nombre_grande: datos.dosTamanos ? datos.nombre_grande.trim() : null,
+        picante: esBebida ? 0 : Number(datos.picante),       // las bebidas no pican
+        // Tamaños (solo bebidas): si no tiene dos tamaños, mandamos null = un solo precio
+        precio_grande: conTamanos ? Number(datos.precio_grande) : null,
+        nombre_chico: conTamanos ? datos.nombre_chico.trim() : null,
+        nombre_grande: conTamanos ? datos.nombre_grande.trim() : null,
         ...(imagen_url && { imagen_url }),
       };
       if (editando) await actualizarPlato(plato.id, cuerpo);
@@ -125,13 +132,14 @@ export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
             </select>
           </label>
           <label className="campo">
-            {datos.dosTamanos ? `Precio ${datos.nombre_chico || 'chico'} (S/)` : 'Precio (S/)'}
+            {conTamanos ? `Precio ${datos.nombre_chico || 'chico'} (S/)` : 'Precio (S/)'}
             <input inputMode="decimal" value={datos.precio} placeholder="0.00"
               onChange={(e) => setDatos({ ...datos, precio: e.target.value.replace(/[^\d.]/g, '') })} />
           </label>
         </div>
 
-        {/* ¿Pica? Se muestra en la carta y el asistente lo usa para recomendar */}
+        {/* COMIDAS: ¿Pica? Se muestra en la carta y el asistente lo usa para recomendar */}
+        {!esBebida && (
         <div className="campo">
           ¿Pica?
           <div className="opciones-picante" role="radiogroup" aria-label="Nivel de picante">
@@ -144,15 +152,18 @@ export default function FormPlato({ plato, categorias, onCerrar, onGuardado }) {
             ))}
           </div>
         </div>
+        )}
 
-        {/* Dos tamaños (bebidas, por ejemplo): cada uno con su nombre y su precio */}
+        {/* BEBIDAS: dos tamaños, cada uno con su nombre y su precio */}
+        {esBebida && (
         <label className="form-plato-check">
           <input type="checkbox" checked={datos.dosTamanos}
             onChange={(e) => setDatos({ ...datos, dosTamanos: e.target.checked })} />
           Se vende en dos tamaños (ej: vaso y jarra, personal y 1 litro)
         </label>
+        )}
 
-        {datos.dosTamanos && (
+        {conTamanos && (
           <div className="form-plato-tamanos">
             <div className="sugerencias">
               {SUGERENCIAS.map(([chico, grande]) => (
